@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { log, spinner } from "@clack/prompts";
 import pc from "picocolors";
+import { EncryptedFileSecretsManager } from "../../lib/secrets/encrypted-file.ts";
+import { API_KEY_SERVICE } from "../../lib/secrets/types.ts";
 
 // ==============================================================================
 // KIRO AUTH — Device Code OAuth & Credential Management
@@ -311,6 +313,8 @@ export async function refreshKiroToken(auth: KiroAuthDetails): Promise<KiroAuthD
   };
 
   cachedAuth = newAuth;
+  const manager = new EncryptedFileSecretsManager();
+  await manager.setSecret(API_KEY_SERVICE, "kiro_auth_cache", JSON.stringify(newAuth));
   return newAuth;
 }
 
@@ -513,6 +517,17 @@ async function runOAuthDeviceCodeFlow(): Promise<KiroAuthDetails> {
  * Tries: 1) cached auth → 2) Kiro CLI DB → 3) OAuth device code flow.
  */
 export async function getKiroAuth(): Promise<KiroAuthDetails> {
+  // Load from persistent cache if available
+  if (!cachedAuth) {
+    const manager = new EncryptedFileSecretsManager();
+    const stored = await manager.getSecret(API_KEY_SERVICE, "kiro_auth_cache");
+    if (stored) {
+      try {
+        cachedAuth = JSON.parse(stored);
+      } catch {}
+    }
+  }
+
   // 1. Return cached auth if still valid
   if (cachedAuth && Date.now() < cachedAuth.expires - 60_000) {
     return cachedAuth;
@@ -565,12 +580,16 @@ export async function getKiroAuth(): Promise<KiroAuthDetails> {
 
   // 3. Run OAuth device code flow
   cachedAuth = await runOAuthDeviceCodeFlow();
+  const manager = new EncryptedFileSecretsManager();
+  await manager.setSecret(API_KEY_SERVICE, "kiro_auth_cache", JSON.stringify(cachedAuth));
   return cachedAuth;
 }
 
 /**
  * Clear cached Kiro auth (used when re-authenticating).
  */
-export function clearKiroAuth(): void {
+export async function clearKiroAuth(): Promise<void> {
   cachedAuth = null;
+  const manager = new EncryptedFileSecretsManager();
+  await manager.deleteSecret(API_KEY_SERVICE, "kiro_auth_cache");
 }

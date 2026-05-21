@@ -110,8 +110,8 @@ export async function showWelcomeScreen(
   const leftContent: string[] = [
     "",
     "",
-    center(pc.cyan("▄▀█ █   ▄▄ █▀▀ █ ▀█▀"), leftWidth),
-    center(pc.cyan("█▀█ █   ░░ █▄█ █ ░█░"), leftWidth),
+    center(pc.cyan("▄▀█ █ █▀▀ ▀█▀ █▀▀"), leftWidth),
+    center(pc.cyan("█▀█ █ █▄█  █  █▄▄"), leftWidth),
     "",
     center(pc.dim("Welcome to AIGTC!"), leftWidth),
     "",
