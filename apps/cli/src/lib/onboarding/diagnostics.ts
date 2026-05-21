@@ -1,0 +1,206 @@
+// ==============================================================================
+// CONFIG DIAGNOSTICS
+// Detailed configuration validation with actionable error messages.
+// ==============================================================================
+
+import pc from "picocolors";
+import type { UserConfig } from "../../config.ts";
+import { getProviderById } from "../../providers/registry.ts";
+import { getAdapter } from "../../providers/index.ts";
+import { hasApiKey } from "../secrets/index.ts";
+import { ERROR_MESSAGES, getInstallInfo } from "./constants.ts";
+import {
+  getCatalogModelMetadata,
+  getModelCatalog,
+  isDeprecatedModel,
+} from "../../providers/api/models/index.ts";
+
+// ==============================================================================
+// TYPES
+// ==============================================================================
+
+export interface ConfigDiagnostic {
+  valid: boolean;
+  errors: ConfigError[];
+  warnings: ConfigWarning[];
+}
+
+export interface ConfigError {
+  code: string;
+  message: string;
+  suggestion: string;
+}
+
+export interface ConfigWarning {
+  code: string;
+  message: string;
+}
+
+// ==============================================================================
+// DIAGNOSTIC FUNCTIONS
+// ==============================================================================
+
+/**
+ * Validate configuration and return detailed diagnostics.
+ * Unlike isConfigComplete(), this provides actionable error messages.
+ */
+export async function diagnoseConfig(config: UserConfig | undefined): Promise<ConfigDiagnostic> {
+  const errors: ConfigError[] = [];
+  const warnings: ConfigWarning[] = [];
+
+  if (!config) {
+    errors.push({
+      code: "NO_CONFIG",
+      message: ERROR_MESSAGES.noConfig.message,
+      suggestion: ERROR_MESSAGES.noConfig.suggestion,
+    });
+    return { valid: false, errors, warnings };
+  }
+
+  // Check provider
+  if (!config.provider) {
+    errors.push({
+      code: "MISSING_PROVIDER",
+      message: ERROR_MESSAGES.missingProvider.message,
+      suggestion: ERROR_MESSAGES.missingProvider.suggestion,
+    });
+  } else {
+    const provider = getProviderById(config.provider);
+    if (!provider) {
+      const err = ERROR_MESSAGES.invalidProvider(config.provider);
+      errors.push({
+        code: "INVALID_PROVIDER",
+        message: err.message,
+        suggestion: err.suggestion,
+      });
+    } else {
+      // Provider exists, check availability based on provider's mode
+      if (provider.mode === "cli") {
+        const adapter = getAdapter(config.provider);
+        if (adapter) {
+          const available = await adapter.checkAvailable();
+          if (!available && provider.binary) {
+            const installInfo = getInstallInfo(config.provider);
+            errors.push({
+              code: "CLI_NOT_INSTALLED",
+              message: `${provider.name} CLI (${provider.binary}) is not installed.`,
+              suggestion: installInfo
+                ? `Install: ${installInfo.installCommand}`
+                : `Install the ${provider.binary} CLI and try again.`,
+            });
+          }
+        }
+      } else if (provider.mode === "api") {
+        // Check API key
+        const keyExists = await hasApiKey(config.provider);
+        if (!keyExists) {
+          const err = ERROR_MESSAGES.apiKeyMissing(provider.name);
+          errors.push({
+            code: "API_KEY_MISSING",
+            message: err.message,
+            suggestion: err.suggestion,
+          });
+        }
+      }
+    }
+  }
+
+  // Check model
+  if (!config.model) {
+    errors.push({
+      code: "MISSING_MODEL",
+      message: ERROR_MESSAGES.missingModel.message,
+      suggestion: ERROR_MESSAGES.missingModel.suggestion,
+    });
+  } else if (config.provider) {
+    const provider = getProviderById(config.provider);
+    if (provider && !provider.dynamicModels) {
+      const modelExists = provider.models.some((m) => m.id === config.model);
+      if (!modelExists) {
+        const err = ERROR_MESSAGES.invalidModel(config.model, provider.name);
+        errors.push({
+          code: "INVALID_MODEL",
+          message: err.message,
+          suggestion: `Available models: ${provider.models.map((m) => m.id).join(", ")}`,
+        });
+      }
+    } else if (
+      provider &&
+      (config.provider === "openrouter" ||
+        config.provider === "openai" ||
+        config.provider === "anthropic" ||
+        config.provider === "google-ai-studio")
+    ) {
+      try {
+        const catalog = await getModelCatalog();
+        const metadata = getCatalogModelMetadata(
+          config.provider,
+          {
+            id: config.model,
+            name: config.model,
+          },
+          catalog,
+        );
+
+        if (isDeprecatedModel(metadata)) {
+          errors.push({
+            code: "DEPRECATED_MODEL",
+            message: `Configured model '${metadata?.name || config.model}' is deprecated.`,
+            suggestion: "Run: aigtc configure to choose a supported model.",
+          });
+        }
+      } catch {
+        warnings.push({
+          code: "MODEL_CATALOG_UNAVAILABLE",
+          message: "Could not validate model deprecation because model catalog is unavailable.",
+        });
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Format diagnostic results for display.
+ */
+export function formatDiagnostics(diagnostic: ConfigDiagnostic): string {
+  if (diagnostic.valid) {
+    return pc.green("Configuration is valid.");
+  }
+
+  const lines: string[] = [pc.red(pc.bold("Configuration Error")), ""];
+
+  for (const error of diagnostic.errors) {
+    lines.push(pc.red(`  ${error.message}`));
+    lines.push(pc.dim(`  ${error.suggestion}`));
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Quick check if config is valid (without detailed diagnostics).
+ * Use diagnoseConfig() when you need detailed error messages.
+ */
+export function isConfigValid(config: UserConfig | undefined): boolean {
+  if (!config) return false;
+  if (!config.provider) return false;
+  if (!config.model) return false;
+
+  const provider = getProviderById(config.provider);
+  if (!provider) return false;
+
+  // For non-dynamic providers, validate model exists
+  if (!provider.dynamicModels) {
+    const modelExists = provider.models.some((m) => m.id === config.model);
+    if (!modelExists) return false;
+  }
+
+  return true;
+}

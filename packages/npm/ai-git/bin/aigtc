@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+
+const { execFileSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+
+const PLATFORMS = {
+  darwin: { arm64: "@aigtc/darwin-arm64", x64: "@aigtc/darwin-x64" },
+  linux: { arm64: "@aigtc/linux-arm64", x64: "@aigtc/linux-x64" },
+  win32: { arm64: "@aigtc/win32-arm64", x64: "@aigtc/win32-x64" },
+};
+
+const platformPkgs = PLATFORMS[os.platform()];
+if (!platformPkgs) {
+  console.error(`aigtc: unsupported platform: ${os.platform()}-${os.arch()}`);
+  process.exit(1);
+}
+
+const pkg = platformPkgs[os.arch()];
+if (!pkg) {
+  console.error(`aigtc: unsupported architecture: ${os.platform()}-${os.arch()}`);
+  process.exit(1);
+}
+
+const ext = os.platform() === "win32" ? ".exe" : "";
+const bin = path.join(
+  path.dirname(require.resolve(`${pkg}/package.json`)),
+  "bin",
+  `aigtc${ext}`,
+);
+
+if (!fs.existsSync(bin)) {
+  console.error(
+    `aigtc: binary not found at ${bin}\n` +
+    `The platform package (${pkg}) may not contain a binary yet.\n` +
+    `Try reinstalling: npm install -g @aigtc/cli`
+  );
+  process.exit(1);
+}
+
+try {
+  execFileSync(bin, process.argv.slice(2), { stdio: "inherit" });
+} catch (e) {
+  if (e && typeof e === "object" && "status" in e && e.status !== null) {
+    process.exit(e.status);
+  }
+  throw e;
+}

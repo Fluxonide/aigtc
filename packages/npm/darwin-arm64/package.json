@@ -1,0 +1,20 @@
+{
+  "name": "@aigtc/darwin-arm64",
+  "version": "0.0.0",
+  "description": "aigtc binary for macOS ARM64",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fluxonide/aigtc"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}

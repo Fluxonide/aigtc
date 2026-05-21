@@ -1,0 +1,234 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags and remote branches
+        run: git fetch --force --tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build for macOS ARM64
+        working-directory: apps/cli
+        run: |
+          bun run build --target bun-darwin-arm64
+          test -f dist/aigtc || { echo "ERROR: dist/aigtc not found after build"; exit 1; }
+          cd dist
+          tar -czf aigtc-darwin-arm64.tar.gz aigtc
+
+      - name: Build for macOS x64
+        working-directory: apps/cli
+        run: |
+          rm -f dist/aigtc
+          bun run build --target bun-darwin-x64
+          test -f dist/aigtc || { echo "ERROR: dist/aigtc not found after build"; exit 1; }
+          cd dist
+          tar -czf aigtc-darwin-x64.tar.gz aigtc
+
+      - name: Build for Linux x64
+        working-directory: apps/cli
+        run: |
+          rm -f dist/aigtc
+          bun run build --target bun-linux-x64
+          test -f dist/aigtc || { echo "ERROR: dist/aigtc not found after build"; exit 1; }
+          cd dist
+          tar -czf aigtc-linux-x64.tar.gz aigtc
+
+      - name: Build for Linux ARM64
+        working-directory: apps/cli
+        run: |
+          rm -f dist/aigtc
+          bun run build --target bun-linux-arm64
+          test -f dist/aigtc || { echo "ERROR: dist/aigtc not found after build"; exit 1; }
+          cd dist
+          tar -czf aigtc-linux-arm64.tar.gz aigtc
+
+      - name: Build for Windows x64
+        working-directory: apps/cli
+        run: |
+          rm -f dist/aigtc.exe
+          bun run build --target bun-windows-x64
+          test -f dist/aigtc.exe || { echo "ERROR: dist/aigtc.exe not found after build"; exit 1; }
+          cd dist
+          zip aigtc-windows-x64.zip aigtc.exe
+
+      - name: Build for Windows ARM64
+        working-directory: apps/cli
+        run: |
+          rm -f dist/aigtc.exe
+          bun run build --target bun-windows-arm64
+          test -f dist/aigtc.exe || { echo "ERROR: dist/aigtc.exe not found after build"; exit 1; }
+          cd dist
+          zip aigtc-windows-arm64.zip aigtc.exe
+
+      - name: Generate checksums
+        working-directory: apps/cli/dist
+        run: shasum -a 256 ./*.tar.gz ./*.zip > checksums.txt
+
+      - name: Generate Changelog
+        uses: orhun/git-cliff-action@v4
+        id: changelog
+        with:
+          config: cliff.toml
+          args: --latest --strip header --github-repo ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.content }}
+          generate_release_notes: false
+          files: |
+            apps/cli/dist/aigtc-darwin-arm64.tar.gz
+            apps/cli/dist/aigtc-darwin-x64.tar.gz
+            apps/cli/dist/aigtc-linux-x64.tar.gz
+            apps/cli/dist/aigtc-linux-arm64.tar.gz
+            apps/cli/dist/aigtc-windows-x64.zip
+            apps/cli/dist/aigtc-windows-arm64.zip
+            apps/cli/dist/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  publish-npm:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install latest npm
+        run: npm install -g npm@latest
+
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ github.ref_name }}
+          mkdir -p /tmp/artifacts
+          cd /tmp/artifacts
+          gh release download "$VERSION" \
+            -R ${{ github.repository }} \
+            -p "aigtc-darwin-arm64.tar.gz" \
+            -p "aigtc-darwin-x64.tar.gz" \
+            -p "aigtc-linux-arm64.tar.gz" \
+            -p "aigtc-linux-x64.tar.gz" \
+            -p "aigtc-windows-x64.zip" \
+            -p "aigtc-windows-arm64.zip"
+
+      - name: Place binaries in platform packages
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          # Extract and place each platform binary
+          for platform in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+            mkdir -p "packages/npm/${platform}/bin"
+            tar -xzf "/tmp/artifacts/aigtc-${platform}.tar.gz" -C "packages/npm/${platform}/bin"
+            chmod +x "packages/npm/${platform}/bin/aigtc"
+          done
+
+          # Windows — verify binary is named aigtc.exe after extraction
+          mkdir -p packages/npm/win32-x64/bin
+          unzip -o /tmp/artifacts/aigtc-windows-x64.zip -d packages/npm/win32-x64/bin
+          test -f packages/npm/win32-x64/bin/aigtc.exe || { echo "ERROR: aigtc.exe not found after extraction"; exit 1; }
+
+          # Windows ARM64
+          mkdir -p packages/npm/win32-arm64/bin
+          unzip -o /tmp/artifacts/aigtc-windows-arm64.zip -d packages/npm/win32-arm64/bin
+          test -f packages/npm/win32-arm64/bin/aigtc.exe || { echo "ERROR: aigtc.exe not found after extraction"; exit 1; }
+
+          # Update all 0.0.0 versions (package version + optionalDependencies)
+          for pkg in packages/npm/*/package.json; do
+            sed -i "s/\"0.0.0\"/\"${VERSION}\"/g" "$pkg"
+          done
+
+      - name: Resolve README symlinks
+        run: |
+          # npm doesn't follow symlinks pointing outside the package directory
+          for readme in packages/npm/*/README.md; do
+            if [ -L "$readme" ]; then
+              cp --remove-destination "$(readlink -f "$readme")" "$readme"
+            fi
+          done
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          for pkg in darwin-arm64 darwin-x64 linux-arm64 linux-x64 win32-arm64 win32-x64; do
+            echo "Publishing @aigtc/${pkg}..."
+            if npm view "@aigtc/${pkg}@${VERSION}" version >/dev/null 2>&1; then
+              echo "@aigtc/${pkg}@${VERSION} already published; skipping."
+              continue
+            fi
+            cd "packages/npm/${pkg}"
+            npm publish --provenance --access public
+            cd "${{ github.workspace }}"
+          done
+
+      - name: Validate main package (dry-run)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          echo "Validating @aigtc/cli..."
+          if npm view "@aigtc/cli@${VERSION}" version >/dev/null 2>&1; then
+            echo "@aigtc/cli@${VERSION} already published; skipping dry-run validation."
+            exit 0
+          fi
+          cd packages/npm/ai-git
+          npm publish --provenance --access public --dry-run
+
+      - name: Publish main package (@aigtc/cli)
+        working-directory: packages/npm/ai-git
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          if npm view "@aigtc/cli@${VERSION}" version >/dev/null 2>&1; then
+            echo "@aigtc/cli@${VERSION} already published; skipping."
+            exit 0
+          fi
+
+          npm publish --provenance --access public

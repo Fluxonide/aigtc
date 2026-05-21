@@ -1,0 +1,51 @@
+{
+  "name": "cli",
+  "version": "0.0.0-git",
+  "description": "A CLI tool that leverages AI to automatically generate semantically correct, Conventional Commits compliant git messages.",
+  "license": "MIT",
+  "author": "Fluxonide",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fluxonide/aigtc"
+  },
+  "bin": {
+    "aigtc": "src/index.ts"
+  },
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build --compile --minify --sourcemap src/index.ts --outfile dist/aigtc",
+    "typecheck": "tsc --noEmit",
+    "check": "oxlint && oxfmt --check",
+    "check:fix": "oxlint --fix && oxfmt --write",
+    "test": "bun test",
+    "sync:catalog": "bun run scripts/sync-model-catalog.ts",
+    "sync:schema": "bun run scripts/sync-schema-models.ts",
+    "sync:models": "bun run sync:catalog && bun run sync:schema"
+  },
+  "dependencies": {
+    "@aigtc/meta": "workspace:*",
+    "@ai-sdk/anthropic": "^3.0.1",
+    "@ai-sdk/cerebras": "^2.0.33",
+    "@ai-sdk/google": "^3.0.1",
+    "@ai-sdk/openai": "^3.0.1",
+    "@clack/prompts": "^0.11.0",
+    "@openrouter/ai-sdk-provider": "^2.2.3",
+    "ai": "^6.0.5",
+    "cac": "^6.7.14",
+    "picocolors": "^1.1.1",
+    "prompts": "^2.4.2",
+    "xstate": "^5.28.0"
+  },
+  "devDependencies": {
+    "@aigtc/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "@types/prompts": "^2.4.9",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
+  }
+}

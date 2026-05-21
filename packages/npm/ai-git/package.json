@@ -1,0 +1,37 @@
+{
+  "name": "@aigtc/cli",
+  "version": "0.0.0",
+  "description": "AI-powered git commit message generator",
+  "keywords": [
+    "ai",
+    "cli",
+    "commit",
+    "conventional-commits",
+    "git"
+  ],
+  "homepage": "https://github.com/Fluxonide/aigtc",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fluxonide/aigtc"
+  },
+  "bin": {
+    "aigtc": "bin/aigtc"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "optionalDependencies": {
+    "@aigtc/darwin-arm64": "0.0.0",
+    "@aigtc/darwin-x64": "0.0.0",
+    "@aigtc/linux-arm64": "0.0.0",
+    "@aigtc/linux-x64": "0.0.0",
+    "@aigtc/win32-arm64": "0.0.0",
+    "@aigtc/win32-x64": "0.0.0"
+  }
+}

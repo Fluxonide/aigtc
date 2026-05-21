@@ -1,0 +1,55 @@
+# aigtc
+
+> aigtc is a CLI tool that reads git diffs and generates Conventional Commits-compliant commit messages using the AI provider selected by the user.
+
+aigtc is designed for developers and teams that want clean, reviewable commit history without writing every commit subject and body by hand. It supports interactive review, retry, edit, commit, and push flows. Diffs are sent only to the configured provider; aigtc does not proxy requests, collect telemetry, or silently fall back to another provider.
+
+## Core links
+
+- [Website](https://github.com/Fluxonide/aigtc/): Product overview, installation options, provider list, configuration summary, and FAQ.
+- [GitHub repository](https://github.com/Fluxonide/aigtc): Source code, issues, releases, and contribution workflow.
+- [README](https://github.com/Fluxonide/aigtc/blob/main/README.md): Installation, quick start, CLI reference, examples, provider setup, and configuration details.
+- [npm package](https://www.npmjs.com/package/@aigtc/cli): Published CLI package for global installation.
+- [Configuration schema](https://github.com/Fluxonide/aigtc/schema.json): JSON schema for project-level `.aigtc.json` configuration.
+
+## Installation
+
+- [npm package](https://www.npmjs.com/package/@aigtc/cli): Install with `npm install -g @aigtc/cli`. Also works with Bun, pnpm, and Yarn.
+- Homebrew: Install on macOS with `brew install sadiksaifi/tap/aigtc`.
+- [Shell installer](https://github.com/Fluxonide/aigtc/install): Install on macOS or Linux with `curl -fsSL https://github.com/Fluxonide/aigtc/install | bash`.
+- [Source repository](https://github.com/Fluxonide/aigtc): Build from source with Bun via `bun install` and `bun run build`.
+
+## Usage
+
+- Run `aigtc` in any git repository to generate a commit message from the current diff.
+- Use `aigtc configure` to choose an AI provider and model.
+- Use `aigtc upgrade` to update the installed CLI.
+- Important flags include `--provider`, `--model`, `--stage-all`, `--commit`, `--push`, `--hint`, `--exclude`, `--dry-run`, and `--dangerously-auto-approve`.
+
+## Providers
+
+aigtc supports both CLI-based and API-based providers.
+
+- CLI providers: Claude Code, Gemini CLI, Codex, OpenCode, Pi.
+- API providers: OpenRouter, OpenAI, Anthropic, Google AI Studio, Cerebras.
+
+CLI providers require the corresponding provider binary on `PATH`. API providers require an API key stored through the operating system keychain when available.
+
+## Configuration
+
+- Global config lives at `~/.config/aigtc/config.json`.
+- Project config lives at `.aigtc.json` in the repository root and can be committed for team-wide defaults.
+- Per-run CLI flags override project and global configuration.
+- Project config can define provider/model defaults, workflow defaults, prompt context, style rules, and examples.
+
+## Security and privacy
+
+- Diffs are sent only to the provider selected by the user.
+- aigtc does not run a proxy service for provider requests.
+- API keys are stored in the OS keychain when available: macOS Keychain, libsecret on Linux, or Windows Credential Manager.
+- The CLI shows generated commit messages before committing unless automated flags are explicitly used.
+
+## Optional
+
+- [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): Commit message format followed by aigtc.
+- [Author website](https://sadiksaifi.dev): Project author homepage.

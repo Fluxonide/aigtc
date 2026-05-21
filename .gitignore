@@ -1,0 +1,57 @@
+# turbo
+.turbo
+
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env*
+!.env.example
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# plans (scratch/draft documents, never commit)
+**/plans/
+
+# alchemy.run state (contains plaintext secrets in .alchemy/local/wrangler.json)
+.alchemy/
+
+# Temporary migration & publish scripts
+local-publish.js
+rename-binary.js
+scope-rename-aigtc.js
+scope-rename-a1c.js
+replace-all.js
+scope-rename-lower.js
+
+# Ignore compiled binaries in platform packages
+packages/npm/*/bin/aigtc
+packages/npm/*/bin/aigtc.exe
+packages/npm/*/bin/ai-git
+packages/npm/*/bin/ai-git.exe
+!packages/npm/ai-git/bin/aigtc
+
+reset-author.js

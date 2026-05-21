@@ -1,0 +1,66 @@
+---
+import { faq } from "@aigtc/content/web"
+---
+
+<section class="section faq" id="faq">
+  <div class="container">
+    <header class="section-head">
+      <span class="eyebrow">Questions</span>
+      <h2>Things people ask.</h2>
+    </header>
+    <dl class="faq-list">
+      {
+        faq.map((q, i) => (
+          <div class="faq-item">
+            <span class="q-idx">{String(i + 1).padStart(2, "0")}</span>
+            <div>
+              <dt>{q.question}</dt>
+              <dd set:html={q.answer} />
+            </div>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-y);
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  .faq-list {
+    margin-top: var(--space-10);
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-block: var(--space-5);
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: var(--space-4);
+  }
+  .q-idx {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    padding-top: 2px;
+  }
+  dt {
+    font-size: var(--text-base);
+    color: var(--color-fg);
+    font-weight: 500;
+  }
+  dd {
+    margin: 6px 0 0;
+    color: var(--color-fg-dim);
+    font-size: var(--text-sm);
+    max-width: 62ch;
+    line-height: 1.6;
+  }
+  dd :global(code) {
+    color: var(--color-fg-dim);
+  }
+</style>

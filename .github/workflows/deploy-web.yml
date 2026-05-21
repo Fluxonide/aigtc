@@ -1,0 +1,73 @@
+name: Deploy Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/content/**"
+      - "packages/meta/**"
+      - "install.sh"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://github.com/Fluxonide/aigtc
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Astro 6 requires Node >=22.12; the runner default is older. Bun runs
+      # alchemy/CLI itself, but the Astro build shells out to Node.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build site
+        working-directory: apps/web
+        run: bun run build
+
+      - name: Deploy via Alchemy
+        working-directory: apps/web
+        run: bun run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ALCHEMY_PASSWORD: ${{ secrets.ALCHEMY_PASSWORD }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+          # Local state is fine here: every resource sets `adopt: true`, so
+          # CI re-adopts on each run rather than tracking drift via state.
+          # Revisit with CloudflareStateStore if we start renaming/removing
+          # resources and need drift-based cleanup.
+          ALCHEMY_CI_STATE_STORE_CHECK: "false"
+
+      # The www -> apex redirect rule is a one-time manual setup via
+      # apps/web/scripts/setup-www-redirect.ts (needs a broader CF token
+      # than the minimal-scope one used here). It doesn't change per-deploy.
+      # If it ever goes missing, re-run the script locally.

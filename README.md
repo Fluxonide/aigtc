@@ -1,0 +1,248 @@
+# AIGTC
+
+A CLI tool that leverages AI to automatically generate semantically correct, conventional commits compliant git messages.
+
+<img width="1351" height="883" alt="Screenshot 2026-01-02 at 03 23 41" src="https://github.com/user-attachments/assets/657cbb28-ac54-435f-9759-a31a762c45a3" />
+
+## Features
+
+- 🤖 **AI-Powered** - Analyzes diffs and understands the _intent_ of your changes
+- 📝 **Conventional Commits** - Strictly adheres to [v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification
+- 🎨 **Interactive TUI** - Beautiful prompts for staging, editing, and confirming
+- 🔌 **Multiple Providers** - Claude Code, Gemini CLI, Codex, OpenCode, Pi, OpenRouter, OpenAI, Anthropic, Google AI Studio, Cerebras
+- 🔐 **Secure** - API keys stored in keychain, never in config files
+
+## Installation
+
+### npm (Recommended)
+
+```bash
+npm install -g @aigtc/cli
+```
+
+> Also works with `bun`, `pnpm`, and `yarn`.
+
+### Homebrew (macOS)
+
+```bash
+brew tap sadiksaifi/tap/aigtc
+```
+
+### Shell Script (macOS/Linux)
+
+```bash
+curl -fsSL https://github.com/Fluxonide/aigtc/install | bash
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/Fluxonide/aigtc.git
+cd aigtc
+bun install
+bun run build
+```
+
+## Quick Start
+
+Run `aigtc` in any git repository:
+
+```bash
+aigtc
+```
+
+On first run, you'll be guided through a quick setup wizard to choose your AI provider.
+
+Settings are saved to `~/.config/aigtc/config.json`
+
+> **Reconfigure:** `aigtc configure`
+> **Self-update:** `aigtc upgrade`
+
+## Usage
+
+### CLI Reference
+
+```sh
+$ aigtc --help
+Usage:
+  $ aigtc [command] [options]
+
+AI-powered Conventional Commits
+
+Commands:
+  configure                    Set up AI provider and model
+  upgrade                      Update aigtc to the latest version
+
+Model:
+  --provider <id>              Use a specific AI provider for this run
+  --model <id>                 Use a specific model for this run
+
+Workflow:
+  -A, --stage-all              Stage all changes before generating
+  -C, --commit                 Commit without confirmation
+  -P, --push                   Push to remote after committing
+  -H, --hint <text>            Guide the AI with additional context
+  -X, --exclude <pattern>      Skip files when staging (glob, regex, or path)
+  --dangerously-auto-approve   Stage, commit, and push without prompts
+  --dry-run                    Preview the prompt without calling the AI
+
+Info:
+  -v, --version                Show version
+  -h, --help                   Show help
+```
+
+### Examples
+
+```bash
+# Use configured defaults
+aigtc
+
+# Override provider for this run
+aigtc --provider gemini-cli --model gemini-3-flash-preview
+
+# Use Codex with reasoning effort baked in
+aigtc --provider codex --model gpt-5.3-codex-low
+
+# Use OpenCode with a runtime variant
+aigtc --provider opencode --model opencode/gpt-5-nano#minimal
+
+# Use Pi with a thinking level
+aigtc --provider pi --model openai-codex/gpt-5.4-mini#low
+
+# Use OpenRouter
+aigtc --provider openrouter --model anthropic/claude-sonnet-4-6
+
+# Exclude files/directories from staging
+aigtc -A --exclude "tests/" --exclude "*.test.ts"
+
+# Automated (Be careful!)
+aigtc --dangerously-auto-approve --hint "Refactored authentication module"
+
+# Dry run works without installed provider CLI/API key
+aigtc --dry-run -A
+```
+
+## Supported Providers
+
+| Provider         | ID                 | Type | Requirements                                                                            |
+| :--------------- | :----------------- | :--- | :-------------------------------------------------------------------------------------- |
+| Claude Code      | `claude-code`      | CLI  | [Install CLI](https://claude.com/claude-code)                                           |
+| Gemini CLI       | `gemini-cli`       | CLI  | [Install CLI](https://ai.google.dev/gemini-api/docs/cli)                                |
+| Codex            | `codex`            | CLI  | [Install CLI](https://developers.openai.com/codex/cli)                                  |
+| OpenCode         | `opencode`         | CLI  | [Install CLI](https://opencode.ai)                                                       |
+| Pi               | `pi`               | CLI  | [Install CLI](https://pi.dev)                                                            |
+| OpenRouter       | `openrouter`       | API  | [Get API Key](https://openrouter.ai/keys)                                               |
+| OpenAI           | `openai`           | API  | [Get API Key](https://platform.openai.com/api-keys)                                     |
+| Google AI Studio | `google-ai-studio` | API  | [Get API Key](https://aistudio.google.com/app/apikey)                                   |
+| Anthropic        | `anthropic`        | API  | [Get API Key](https://console.anthropic.com/settings/keys)                              |
+| Cerebras         | `cerebras`         | API  | [Get API Key](https://cloud.cerebras.ai/)                                               |
+
+Configure with `aigtc configure`
+
+## Configuration
+
+AIGTC uses a **three-tier configuration system**:
+
+1. **CLI flags** (highest priority)
+2. **Project config** (`.aigtc.json`)
+3. **Global config** (`~/.config/aigtc/config.json`)
+
+### Example Configs
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "provider": "claude-code",
+  "model": "haiku",
+  "defaults": {
+    "stageAll": false,
+    "commit": false,
+    "push": false
+  }
+}
+```
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "provider": "openrouter",
+  "model": "anthropic/claude-sonnet-4-6"
+}
+```
+
+> **Tip:** Add the `$schema` property for autocomplete and validation in your editor.
+>
+> **Note:** API keys are stored securely in keychain, not in config files.
+
+## Advanced: Custom Prompts
+
+The default prompt works excellently for most projects. Customize only for project-specific needs like ticket systems, monorepo scopes, or team style preferences.
+
+### Customization Options
+
+| Field             | Description                                | Example                                             |
+| :---------------- | :----------------------------------------- | :-------------------------------------------------- |
+| `prompt.context`  | Project-specific information               | `"React Native app. Jira tickets: PROJ-123"`        |
+| `prompt.style`    | Style/format preferences                   | `"Always include scope. Keep body under 5 points."` |
+| `prompt.examples` | Custom commit examples (replaces defaults) | Array of commit message strings                     |
+
+### Example: Monorepo with Scopes
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "provider": "claude-code",
+  "model": "sonnet",
+  "prompt": {
+    "context": "Monorepo with packages: web, mobile, shared, api, docs, infra.",
+    "style": "Always use a scope from the valid list. Reference PR numbers in footer."
+  }
+}
+```
+
+### Example: Custom Commit Format
+
+```json
+{
+  "prompt": {
+    "examples": [
+      "feat(auth): add SSO integration\n\n- implement SAML 2.0 authentication\n- add identity provider configuration\n- support multiple IdP connections\n\nRefs: PROJ-456",
+      "fix(api): resolve rate limiting bypass\n\n- add per-user rate limit tracking\n- implement sliding window algorithm\n- add rate limit headers to responses"
+    ]
+  }
+}
+```
+
+> **Note:** Only provide `examples` if you have very specific formatting requirements.
+
+## Development
+
+```bash
+# Install dependencies
+bun install
+
+# Run in development
+bun run dev
+
+# Test prompt generation without AI call
+bun run dev --dry-run -A
+
+# Disable update-check network calls (useful for tests/CI)
+AI_GIT_DISABLE_UPDATE_CHECK=1 bun test
+
+# Type check
+bun run typecheck
+
+# Build binary
+bun run build
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## Releases
+
+Releases are managed using standard GitHub Releases and NPM tags.
+
+## License
+
+[MIT](LICENSE)

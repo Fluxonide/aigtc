@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "aigtc",
+  "version": "0.0.0-git",
+  "private": true,
+  "description": "A CLI tool that leverages AI to automatically generate semantically correct, Conventional Commits compliant git messages.",
+  "author": {
+    "name": "Fluxonide",
+    "url": "https://github.com/Fluxonide"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "@types/bun": "latest",
+      "oxfmt": "^0.45.0",
+      "oxlint": "^1.60.0",
+      "turbo": "^2.6.3",
+      "typescript": "^5"
+    }
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:cli": "turbo -F cli dev",
+    "dev:web": "turbo -F web dev",
+    "build": "turbo build",
+    "build:cli": "turbo -F cli build",
+    "build:web": "turbo -F web build",
+    "typecheck": "turbo typecheck",
+    "check": "turbo check",
+    "check:fix": "turbo check:fix",
+    "test": "turbo test",
+    "sync:catalog": "turbo -F cli sync:catalog",
+    "sync:schema": "turbo -F cli sync:schema",
+    "sync:models": "turbo -F cli sync:models"
+  },
+  "devDependencies": {
+    "@aigtc/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:"
+  },
+  "packageManager": "bun@1.3.11"
+}

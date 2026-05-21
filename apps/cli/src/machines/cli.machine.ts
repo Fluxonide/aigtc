@@ -1,0 +1,515 @@
+import { setup, assign, fromPromise } from "xstate";
+import type { ProviderDefinition } from "../types.ts";
+import type { ProviderAdapter } from "../providers/types.ts";
+import type { ResolvedConfig } from "../config.ts";
+
+// ── Types ────────────────────────────────────────────────────────────
+
+/**
+ * CLI options parsed from command-line arguments.
+ * Exported so index.ts can import and use this as a shared interface.
+ */
+export interface CLIOptions {
+  // AI configuration
+  provider?: string;
+  model?: string;
+
+  // Workflow options
+  stageAll: boolean;
+  commit: boolean;
+  push: boolean;
+  dangerouslyAutoApprove: boolean;
+  hint?: string;
+  exclude?: string | string[];
+  dryRun: boolean;
+}
+
+/**
+ * Input provided to the CLI machine on creation.
+ */
+export interface CLIInput {
+  options: CLIOptions;
+  version: string;
+}
+
+/**
+ * Output produced when the CLI machine reaches its final state.
+ */
+export interface CLIOutput {
+  exitCode: 0 | 1 | 130;
+}
+
+/**
+ * Result from the loadAndResolveConfigActor.
+ * Bundles everything needed after config resolution.
+ */
+export interface ConfigResolutionResult {
+  config: ResolvedConfig;
+  providerDef: ProviderDefinition | null;
+  adapter: ProviderAdapter | null;
+  model: string;
+  modelName: string;
+  /** Whether the setup wizard / onboarding needs to run */
+  needsSetup: boolean;
+}
+
+/**
+ * Result from the onboarding actor.
+ */
+export interface OnboardingActorResult {
+  completed: boolean;
+  continueToRun: boolean;
+}
+
+/**
+ * Internal context for the CLI machine.
+ */
+interface CLIContext {
+  // From input
+  options: CLIOptions;
+  version: string;
+
+  // Resolved state
+  configResult: ConfigResolutionResult | null;
+  exitCode: 0 | 1 | 130;
+}
+
+// ── Machine ──────────────────────────────────────────────────────────
+
+export const cliMachine = setup({
+  types: {
+    context: {} as CLIContext,
+    input: {} as CLIInput,
+    output: {} as CLIOutput,
+  },
+  actors: {
+    // ── Config resolution ────────────────────────────────────────────
+    loadAndResolveConfigActor: fromPromise(async (): Promise<ConfigResolutionResult> => {
+      // Default implementation — replaced in production with real config logic
+      // including Bug #2 fix: dynamic provider list via PROVIDERS.map(p => p.id)
+      throw new Error("loadAndResolveConfigActor not provided");
+    }),
+
+    // ── Welcome screen ───────────────────────────────────────────────
+    showWelcomeActor: fromPromise(async (): Promise<void> => {
+      // Default implementation — replaced in production
+    }),
+
+    // ── Onboarding / setup wizard ────────────────────────────────────
+    runOnboardingActor: fromPromise(async (): Promise<OnboardingActorResult> => {
+      return { completed: false, continueToRun: false };
+    }),
+
+    // ── Reload config after onboarding ───────────────────────────────
+    reloadConfigActor: fromPromise(async (): Promise<ConfigResolutionResult> => {
+      throw new Error("reloadConfigActor not provided");
+    }),
+
+    // ── Git checks ───────────────────────────────────────────────────
+    checkGitActor: fromPromise(async (): Promise<void> => {
+      // Default: checkGitInstalled() + checkInsideRepo()
+    }),
+
+    // ── Provider availability ────────────────────────────────────────
+    checkAvailabilityActor: fromPromise(async (): Promise<boolean> => {
+      return true;
+    }),
+
+    // ── Child machines (wrapped as fromPromise for easy testing) ─────
+    stagingMachine: fromPromise(async (): Promise<{ stagedFiles: string[]; aborted: boolean }> => {
+      return { stagedFiles: [], aborted: false };
+    }),
+
+    // ── Clean tree warning ───────────────────────────────────────────
+    warnCleanTreeActor: fromPromise(async (): Promise<void> => {
+      // Default implementation — replaced in production wiring
+    }),
+
+    generationMachine: fromPromise(
+      async (): Promise<{
+        message: string;
+        committed: boolean;
+        aborted: boolean;
+      }> => {
+        return { message: "", committed: false, aborted: false };
+      },
+    ),
+
+    pushMachine: fromPromise(async (): Promise<{ pushed: boolean; exitCode: 0 | 1 }> => {
+      return { pushed: false, exitCode: 0 };
+    }),
+  },
+  guards: {
+    needsSetup: ({ context }) => context.configResult?.needsSetup ?? false,
+    onboardingCompleted: ({ event }) => {
+      const output = (event as { output?: OnboardingActorResult }).output;
+      return output?.completed === true;
+    },
+    onboardingContinues: ({ event }) => {
+      const output = (event as { output?: OnboardingActorResult }).output;
+      return output?.completed === true && output?.continueToRun === true;
+    },
+    stagingAborted: ({ event }) => {
+      const output = (event as { output?: { aborted: boolean } }).output;
+      return output?.aborted === true;
+    },
+    hasNoStagedFiles: ({ event }) => {
+      const output = (event as { output?: { stagedFiles: string[] } }).output;
+      return (output?.stagedFiles?.length ?? 0) === 0;
+    },
+    generationAborted: ({ event }) => {
+      const output = (event as { output?: { aborted: boolean } }).output;
+      return output?.aborted === true;
+    },
+    pushFailed: ({ event }) => {
+      const output = (event as { output?: { exitCode?: number } }).output;
+      return output?.exitCode === 1;
+    },
+    hasIncompleteProviderModelFlags: ({ context }) => {
+      const { provider, model } = context.options;
+      const hasProvider = provider !== undefined;
+      const hasModel = model !== undefined;
+      return hasProvider !== hasModel;
+    },
+  },
+  actions: {
+    expandAutoApproveFlags: assign({
+      options: ({ context }) => {
+        if (context.options.dangerouslyAutoApprove) {
+          return {
+            ...context.options,
+            stageAll: true,
+            commit: true,
+            push: true,
+          };
+        }
+        return context.options;
+      },
+    }),
+    assignConfigResult: assign({
+      configResult: ({ event }) => (event as { output?: ConfigResolutionResult }).output ?? null,
+    }),
+    setExitOk: assign({ exitCode: 0 as const }),
+    setExitError: assign({ exitCode: 1 as const }),
+    setExitInterrupt: assign({ exitCode: 130 as const }),
+    logProviderModelFlagError: ({ context }) => {
+      const missing = context.options.provider !== undefined ? "--model" : "--provider";
+      const present = context.options.provider !== undefined ? "--provider" : "--model";
+      console.error(`Error: ${missing} is also required when using ${present}.`);
+      console.error("Provide both --provider and --model, or neither (to use your configuration).");
+    },
+  },
+}).createMachine({
+  id: "cli",
+  initial: "processFlags",
+  context: ({ input }) => ({
+    options: input.options,
+    version: input.version,
+    configResult: null,
+    exitCode: 0 as const,
+  }),
+  output: ({ context }) => ({
+    exitCode: context.exitCode,
+  }),
+  states: {
+    // ══════════════════════════════════════════════════════════════════
+    // ── PROCESS FLAGS ─────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    processFlags: {
+      entry: "expandAutoApproveFlags",
+      always: [
+        {
+          guard: "hasIncompleteProviderModelFlags",
+          target: "exit",
+          actions: ["logProviderModelFlagError", "setExitError"],
+        },
+        {
+          target: "loadConfig",
+        },
+      ],
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── LOAD CONFIG ───────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    loadConfig: {
+      invoke: {
+        src: "loadAndResolveConfigActor",
+        input: ({ context }) => ({
+          options: context.options,
+          version: context.version,
+        }),
+        onDone: {
+          target: "showWelcome",
+          actions: "assignConfigResult",
+        },
+        onError: {
+          // Config loading failed — covers missing config, unknown provider,
+          // unknown model, and deprecated model errors (all thrown in cli.wired.ts)
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── SHOW WELCOME ──────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    showWelcome: {
+      invoke: {
+        src: "showWelcomeActor",
+        input: ({ context }) => ({
+          version: context.version,
+          configResult: context.configResult,
+          needsSetup: context.configResult?.needsSetup ?? false,
+        }),
+        onDone: [
+          {
+            guard: "needsSetup",
+            target: "runOnboarding",
+          },
+          {
+            target: "checkGit",
+          },
+        ],
+        onError: {
+          // Welcome screen error is non-fatal, continue
+          target: "checkGit",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── RUN ONBOARDING (missing config) ────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    runOnboarding: {
+      invoke: {
+        src: "runOnboardingActor",
+        input: ({ context }) => ({
+          options: context.options,
+        }),
+        onDone: [
+          {
+            // Onboarding completed and user wants to continue
+            guard: "onboardingContinues",
+            target: "reloadConfig",
+          },
+          {
+            // Onboarding completed but user chose to exit
+            guard: "onboardingCompleted",
+            target: "exit",
+            actions: "setExitOk",
+          },
+          {
+            // Onboarding not completed (cancelled)
+            target: "exit",
+            actions: "setExitError",
+          },
+        ],
+        onError: {
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── RELOAD CONFIG (after onboarding) ──────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    reloadConfig: {
+      invoke: {
+        src: "reloadConfigActor",
+        input: ({ context }) => ({
+          options: context.options,
+          version: context.version,
+        }),
+        onDone: {
+          target: "checkGit",
+          actions: "assignConfigResult",
+        },
+        onError: {
+          // If reload fails after onboarding, treat as error
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── CHECK GIT ─────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    checkGit: {
+      invoke: {
+        src: "checkGitActor",
+        onDone: {
+          target: "checkAvailability",
+        },
+        onError: {
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── CHECK AVAILABILITY ────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    checkAvailability: {
+      invoke: {
+        src: "checkAvailabilityActor",
+        input: ({ context }) => ({
+          configResult: context.configResult!,
+          dryRun: context.options.dryRun,
+        }),
+        onDone: {
+          target: "staging",
+        },
+        onError: {
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── STAGING ───────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    staging: {
+      invoke: {
+        src: "stagingMachine",
+        input: ({ context }) => ({
+          stageAll: context.options.stageAll,
+          dangerouslyAutoApprove: context.options.dangerouslyAutoApprove,
+          exclude: context.options.exclude
+            ? Array.isArray(context.options.exclude)
+              ? context.options.exclude
+              : [context.options.exclude]
+            : [],
+        }),
+        onDone: [
+          {
+            guard: "stagingAborted",
+            target: "exit",
+            actions: "setExitError",
+          },
+          {
+            guard: "hasNoStagedFiles",
+            // Clean working directory — warn user, then exit ok
+            target: "warnCleanTree",
+          },
+          {
+            target: "generation",
+          },
+        ],
+        onError: {
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── CLEAN TREE WARNING ────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    warnCleanTree: {
+      invoke: {
+        src: "warnCleanTreeActor",
+        onDone: {
+          target: "exit",
+          actions: "setExitOk",
+        },
+        onError: {
+          // Warning display failure is non-fatal
+          target: "exit",
+          actions: "setExitOk",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── GENERATION ────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    generation: {
+      invoke: {
+        src: "generationMachine",
+        input: ({ context }) => {
+          // Non-null: state flow guarantees loadConfig → showWelcome → checkGit →
+          // checkAvailability → staging → generation, so configResult is always set
+          const cr = context.configResult!;
+          return {
+            model: cr.model,
+            modelName: cr.modelName,
+            options: {
+              commit: context.options.commit,
+              dangerouslyAutoApprove: context.options.dangerouslyAutoApprove,
+              dryRun: context.options.dryRun,
+              hint: context.options.hint,
+            },
+            slowWarningThresholdMs: cr.config?.slowWarningThresholdMs ?? 5000,
+            adapter: cr.adapter,
+            promptCustomization: cr.config?.prompt,
+            editor: cr.config?.editor,
+          };
+        },
+        onDone: [
+          {
+            guard: "generationAborted",
+            target: "exit",
+            actions: "setExitError",
+          },
+          {
+            target: "push",
+          },
+        ],
+        onError: {
+          target: "exit",
+          actions: "setExitError",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── PUSH ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    push: {
+      invoke: {
+        src: "pushMachine",
+        input: ({ context }) => {
+          const isInteractiveMode =
+            !context.options.commit &&
+            !context.options.stageAll &&
+            !context.options.push &&
+            !context.options.dangerouslyAutoApprove;
+          return {
+            push: context.options.push,
+            dangerouslyAutoApprove: context.options.dangerouslyAutoApprove,
+            isInteractiveMode,
+          };
+        },
+        onDone: [
+          {
+            guard: "pushFailed",
+            target: "exit",
+            actions: "setExitError",
+          },
+          {
+            target: "exit",
+            actions: "setExitOk",
+          },
+        ],
+        onError: {
+          // Push errors are non-fatal (push machine handles its own error states)
+          target: "exit",
+          actions: "setExitOk",
+        },
+      },
+    },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ── EXIT (final) ──────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    exit: {
+      type: "final",
+    },
+  },
+});

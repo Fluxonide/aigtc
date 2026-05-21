@@ -1,0 +1,231 @@
+import type { ProviderDefinition, ModelDefinition, Mode } from "../types.ts";
+
+// ==============================================================================
+// PROVIDER REGISTRY
+// ==============================================================================
+
+/**
+ * Supported AI providers and their available models.
+ * Add new providers here to extend support.
+ *
+ * MODEL ORDERING (CLI providers):
+ *   1. Newest generation first (e.g. 5.4 before 5.3)
+ *   2. Smallest/cheapest variant first within a generation (mini → base → max)
+ *   3. Lowest effort first within a variant (low → medium → high → xhigh)
+ *   4. New models go at the TOP of the list
+ */
+export const PROVIDERS: ProviderDefinition[] = [
+  // ==============================================================================
+  // CLI PROVIDERS
+  // ==============================================================================
+  {
+    id: "opencode",
+    name: "OpenCode",
+    mode: "cli",
+    binary: "opencode",
+    dynamicModels: true,
+    models: [],
+  },
+  {
+    id: "pi",
+    name: "Pi",
+    mode: "cli",
+    binary: "pi",
+    dynamicModels: true,
+    models: [],
+  },
+  {
+    id: "codex",
+    name: "Codex",
+    mode: "cli",
+    binary: "codex",
+    isRecommended: true,
+    models: [
+      // gpt-5.4-mini (low, medium, high, xhigh)
+      { id: "gpt-5.4-mini-low", name: "GPT-5.4 Mini (low)", isRecommended: true },
+      { id: "gpt-5.4-mini-medium", name: "GPT-5.4 Mini (medium)" },
+      { id: "gpt-5.4-mini-high", name: "GPT-5.4 Mini (high)" },
+      { id: "gpt-5.4-mini-xhigh", name: "GPT-5.4 Mini (xhigh)" },
+      // gpt-5.4 (low, medium, high, xhigh)
+      { id: "gpt-5.4-low", name: "GPT-5.4 (low)" },
+      { id: "gpt-5.4-medium", name: "GPT-5.4 (medium)" },
+      { id: "gpt-5.4-high", name: "GPT-5.4 (high)" },
+      { id: "gpt-5.4-xhigh", name: "GPT-5.4 (xhigh)" },
+      // gpt-5.3-codex (low, medium, high, xhigh)
+      { id: "gpt-5.3-codex-low", name: "GPT-5.3 Codex (low)" },
+      { id: "gpt-5.3-codex-medium", name: "GPT-5.3 Codex (medium)" },
+      { id: "gpt-5.3-codex-high", name: "GPT-5.3 Codex (high)" },
+      { id: "gpt-5.3-codex-xhigh", name: "GPT-5.3 Codex (xhigh)" },
+      // gpt-5.2-codex (low, medium, high, xhigh)
+      { id: "gpt-5.2-codex-low", name: "GPT-5.2 Codex (low)" },
+      { id: "gpt-5.2-codex-medium", name: "GPT-5.2 Codex (medium)" },
+      { id: "gpt-5.2-codex-high", name: "GPT-5.2 Codex (high)" },
+      { id: "gpt-5.2-codex-xhigh", name: "GPT-5.2 Codex (xhigh)" },
+      // gpt-5.2 (low, medium, high, xhigh)
+      { id: "gpt-5.2-low", name: "GPT-5.2 (low)" },
+      { id: "gpt-5.2-medium", name: "GPT-5.2 (medium)" },
+      { id: "gpt-5.2-high", name: "GPT-5.2 (high)" },
+      { id: "gpt-5.2-xhigh", name: "GPT-5.2 (xhigh)" },
+      // gpt-5.1-codex-mini (low, medium, high)
+      { id: "gpt-5.1-codex-mini-low", name: "GPT-5.1 Codex Mini (low)" },
+      { id: "gpt-5.1-codex-mini-medium", name: "GPT-5.1 Codex Mini (medium)" },
+      { id: "gpt-5.1-codex-mini-high", name: "GPT-5.1 Codex Mini (high)" },
+      // gpt-5.1-codex (low, medium, high)
+      { id: "gpt-5.1-codex-low", name: "GPT-5.1 Codex (low)" },
+      { id: "gpt-5.1-codex-medium", name: "GPT-5.1 Codex (medium)" },
+      { id: "gpt-5.1-codex-high", name: "GPT-5.1 Codex (high)" },
+      // gpt-5.1-codex-max (low, medium, high)
+      { id: "gpt-5.1-codex-max-low", name: "GPT-5.1 Codex Max (low)" },
+      { id: "gpt-5.1-codex-max-medium", name: "GPT-5.1 Codex Max (medium)" },
+      { id: "gpt-5.1-codex-max-high", name: "GPT-5.1 Codex Max (high)" },
+    ],
+  },
+  {
+    id: "claude-code",
+    name: "Claude Code",
+    mode: "cli",
+    binary: "claude",
+    models: [
+      // Haiku does NOT support effort levels — do not add haiku-low/medium/high variants.
+      // The --effort flag is only for Sonnet and Opus (see parseClaudeModelId in cli/claude-code.ts).
+      { id: "haiku", name: "Claude Haiku", isRecommended: true },
+      // sonnet (low, medium, high)
+      { id: "sonnet-low", name: "Claude Sonnet (low)" },
+      { id: "sonnet-medium", name: "Claude Sonnet (medium)" },
+      { id: "sonnet-high", name: "Claude Sonnet (high)" },
+      // opus (low, medium, high)
+      { id: "opus-low", name: "Claude Opus (low)" },
+      { id: "opus-medium", name: "Claude Opus (medium)" },
+      { id: "opus-high", name: "Claude Opus (high)" },
+    ],
+  },
+  {
+    id: "gemini-cli",
+    name: "Gemini CLI",
+    mode: "cli",
+    binary: "gemini",
+    models: [
+      {
+        id: "gemini-3-flash-preview",
+        name: "Gemini 3 Flash Preview",
+        isRecommended: true,
+      },
+      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview" },
+      { id: "gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
+      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+    ],
+  },
+
+  // ==============================================================================
+  // API PROVIDERS
+  // ==============================================================================
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    mode: "api",
+    isRecommended: true,
+    dynamicModels: true,
+    models: [], // Populated dynamically via fetchModels()
+  },
+  {
+    id: "openai",
+    name: "OpenAI",
+    mode: "api",
+    dynamicModels: true,
+    models: [], // Populated dynamically via fetchModels()
+  },
+  {
+    id: "google-ai-studio",
+    name: "Google AI Studio",
+    mode: "api",
+    dynamicModels: true,
+    models: [], // Populated dynamically via fetchModels()
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic",
+    mode: "api",
+    dynamicModels: true,
+    models: [], // Populated dynamically via fetchModels()
+  },
+  {
+    id: "cerebras",
+    name: "Cerebras",
+    mode: "api",
+    dynamicModels: true,
+    models: [], // Populated dynamically via fetchModels()
+  },
+  {
+    id: "kiro",
+    name: "Kiro",
+    mode: "api",
+    dynamicModels: true,
+    models: [], // Populated via fetchModels() (static list, validated with auth)
+  },
+];
+
+// ==============================================================================
+// HELPER FUNCTIONS
+// ==============================================================================
+
+/**
+ * Find a provider by its ID (e.g., "gemini-cli", "claude-code").
+ */
+export function getProviderById(id: string): ProviderDefinition | undefined {
+  return PROVIDERS.find((p) => p.id === id);
+}
+
+/**
+ * Find a provider by its binary name (e.g., "gemini", "claude").
+ * Only applicable for CLI mode providers.
+ */
+export function getProviderByBinary(binary: string): ProviderDefinition | undefined {
+  return PROVIDERS.find((p) => p.mode === "cli" && p.binary === binary);
+}
+
+/**
+ * Get all providers for a specific mode.
+ */
+export function getProvidersByMode(mode: Mode): ProviderDefinition[] {
+  return PROVIDERS.filter((p) => p.mode === mode);
+}
+
+/**
+ * Get all available provider IDs.
+ */
+export function getProviderIds(): string[] {
+  return PROVIDERS.map((p) => p.id);
+}
+
+/**
+ * Get all model IDs for a specific provider.
+ */
+export function getModelIds(providerId: string): string[] {
+  const provider = getProviderById(providerId);
+  return provider ? provider.models.map((m) => m.id) : [];
+}
+
+/**
+ * Find a model by ID within a provider.
+ */
+export function getModelById(
+  provider: ProviderDefinition,
+  modelId: string,
+): ModelDefinition | undefined {
+  return provider.models.find((m) => m.id === modelId);
+}
+
+/**
+ * Stable sort that moves items with `isRecommended: true` to the front.
+ * Preserves original order among recommended and non-recommended items.
+ * Relies on ES2019+ stable Array.prototype.sort (guaranteed in Bun/V8).
+ */
+export function sortRecommendedFirst<T extends { isRecommended?: boolean }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    if (a.isRecommended && !b.isRecommended) return -1;
+    if (!a.isRecommended && b.isRecommended) return 1;
+    return 0;
+  });
+}

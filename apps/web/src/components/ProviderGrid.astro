@@ -1,0 +1,182 @@
+---
+import { PROVIDERS } from "@aigtc/meta"
+
+const logos: Record<string, string> = {
+  anthropic: "/logos/anthropic.svg",
+  cerebras: "/logos/cerebras.svg",
+  "claude-code": "/logos/claude.svg",
+  codex: "/logos/codex.svg",
+  "gemini-cli": "/logos/gemini.svg",
+  "google-ai-studio": "/logos/google.svg",
+  openai: "/logos/openai.svg",
+  openrouter: "/logos/openrouter.svg",
+  opencode: "/logos/opencode.svg",
+  pi: "/logos/pi.svg",
+}
+
+const providers = Object.values(PROVIDERS).sort((a, b) => a.name.localeCompare(b.name))
+---
+
+<section class="section providers" id="providers">
+  <div class="container">
+    <header class="section-head">
+      <span class="eyebrow">Providers</span>
+      <h2>Bring your own AI.</h2>
+      <p>
+        Ten providers, two integration types. Swap with one flag. No vendor lock-in, no opaque
+        proxy. Your diff goes where you point it.
+      </p>
+    </header>
+
+    <div class="grid">
+      {
+        providers.map((p) => (
+          <a
+            class="provider"
+            href={p.requirementsUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <span class="provider-logo" aria-hidden="true">
+              {logos[p.id] ? (
+                <img src={logos[p.id]} alt="" width="20" height="20" loading="lazy" />
+              ) : (
+                <span class="monogram">{p.name.slice(0, 2).toUpperCase()}</span>
+              )}
+            </span>
+            <span class="provider-text">
+              <span class="provider-name" style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">{p.name}</span>
+                <span class="provider-type">{p.type.toUpperCase()}</span>
+              </span>
+              <span class="provider-req">
+                {p.requirementsLabel} <span aria-hidden="true">→</span>
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-y);
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  .grid {
+    margin-top: var(--space-10);
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-bg-elev);
+  }
+  @media (max-width: 900px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 520px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .provider {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-4) var(--space-3);
+    border-right: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+    transition: background 0.15s;
+    min-height: 92px;
+  }
+  .provider:hover,
+  .provider:focus-visible {
+    background: #131313;
+  }
+  .provider:hover .provider-req,
+  .provider:focus-visible .provider-req {
+    color: var(--color-accent);
+  }
+  .provider:nth-child(5n) {
+    border-right: 0;
+  }
+  .provider:nth-last-child(-n + 5) {
+    border-bottom: 0;
+  }
+  @media (max-width: 900px) {
+    .provider {
+      border-right: 0;
+      border-bottom: 1px solid var(--color-border-subtle) !important;
+    }
+    .provider:nth-child(odd) {
+      border-right: 1px solid var(--color-border-subtle);
+    }
+    .provider:nth-last-child(-n + 2) {
+      border-bottom: 0 !important;
+    }
+  }
+  @media (max-width: 520px) {
+    .provider {
+      border-right: 0 !important;
+    }
+    .provider:not(:last-child) {
+      border-bottom: 1px solid var(--color-border-subtle) !important;
+    }
+    .provider:last-child {
+      border-bottom: 0 !important;
+    }
+  }
+
+  .provider-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-fg);
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .provider-logo img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  .provider-text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .provider-name {
+    font-size: var(--text-base);
+    color: var(--color-fg);
+    font-weight: 500;
+  }
+  .provider-req {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    transition: color 0.15s;
+  }
+  .provider-type {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    padding: 3px 7px;
+    color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+</style>

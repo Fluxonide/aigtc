@@ -1,0 +1,397 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "title": "AIGTC Configuration",
+  "description": "Configuration schema for AIGTC CLI tool",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "editor": {
+      "type": "string",
+      "description": "Preferred editor command (e.g. 'vim', 'nvim', 'nano'). Overrides $EDITOR environment variable.",
+      "examples": [
+        "vim",
+        "nvim",
+        "nano"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "claude-code",
+        "gemini-cli",
+        "codex",
+        "opencode",
+        "pi",
+        "openrouter",
+        "openai",
+        "google-ai-studio",
+        "anthropic",
+        "cerebras",
+        "kiro"
+      ],
+      "description": "AI provider to use for generating commit messages.",
+      "examples": [
+        "claude-code",
+        "gemini-cli",
+        "codex",
+        "opencode",
+        "pi",
+        "openrouter",
+        "openai",
+        "google-ai-studio",
+        "anthropic",
+        "cerebras",
+        "kiro"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "description": "Model ID to use for the selected provider.",
+      "examples": [
+        "haiku",
+        "sonnet-low",
+        "opus-low",
+        "gemini-3-flash-preview",
+        "gpt-5.4",
+        "gpt-5.4-mini",
+        "gpt-5.3-codex",
+        "gpt-5.1-codex-max",
+        "opencode/gpt-5-nano#minimal",
+        "openai-codex/gpt-5.4-mini#low",
+        "openai/gpt-5.4",
+        "gemini-3.1-pro-preview",
+        "claude-sonnet-4-6"
+      ]
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Default workflow behavior options.",
+      "properties": {
+        "stageAll": {
+          "type": "boolean",
+          "description": "Automatically stage all changes (git add -A) before analysis.",
+          "default": false
+        },
+        "commit": {
+          "type": "boolean",
+          "description": "Automatically commit with the generated message (skip confirmation).",
+          "default": false
+        },
+        "push": {
+          "type": "boolean",
+          "description": "Automatically push after committing.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "prompt": {
+      "type": "object",
+      "description": "Prompt customization options. These supplement (not replace) the base system prompt.",
+      "properties": {
+        "context": {
+          "type": "string",
+          "description": "Project-specific context to help the AI understand your codebase.",
+          "examples": [
+            "React Native app using Expo SDK 54. Jira tickets: PROJ-123",
+            "Monorepo with packages: web, mobile, shared, api"
+          ]
+        },
+        "style": {
+          "type": "string",
+          "description": "Style preferences for commit messages.",
+          "examples": [
+            "Always include scope when possible",
+            "Keep body under 5 bullet points",
+            "Reference ticket IDs from branch name in footer"
+          ]
+        },
+        "examples": {
+          "type": "array",
+          "description": "Custom commit message examples. If provided, these replace the default examples. Each string should be a complete commit message.",
+          "items": {
+            "type": "string"
+          },
+          "examples": [
+            [
+              "feat(auth): add SSO integration\n\n- implement SAML 2.0 authentication\n- add identity provider configuration",
+              "fix(api): resolve rate limiting bypass\n\n- add per-user rate limit tracking"
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "slowWarningThresholdMs": {
+      "type": "number",
+      "description": "Milliseconds to wait before showing a slow-generation warning. Set to 0 to disable. Default: 5000.",
+      "default": 5000,
+      "minimum": 0
+    },
+    "api": {
+      "type": "object",
+      "description": "API-specific configuration options. Kept for compatibility; options may be ignored by some versions.",
+      "properties": {
+        "modelCacheTTL": {
+          "type": "number",
+          "description": "Preferred model-list cache TTL in hours for API providers (best-effort compatibility setting).",
+          "default": 48,
+          "minimum": 1,
+          "maximum": 168
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "provider",
+    "model"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "claude-code"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "enum": [
+              "sonnet-low",
+              "sonnet-medium",
+              "sonnet-high",
+              "opus-low",
+              "opus-medium",
+              "opus-high",
+              "haiku"
+            ],
+            "description": "Claude Code virtual model ID. Effort levels: low, medium, high. Format: '<base>-<effort>'. 'sonnet-low' is recommended for speed and cost. 'haiku' has no effort levels."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "gemini-cli"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "enum": [
+              "gemini-3-flash-preview",
+              "gemini-3.1-pro-preview",
+              "gemini-3-pro-preview",
+              "gemini-2.5-flash-lite",
+              "gemini-2.5-flash",
+              "gemini-2.5-pro"
+            ],
+            "description": "Gemini CLI model to use. 'gemini-3-flash-preview' is recommended for speed."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "codex"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "enum": [
+              "gpt-5.4-mini-low",
+              "gpt-5.4-mini-medium",
+              "gpt-5.4-mini-high",
+              "gpt-5.4-mini-xhigh",
+              "gpt-5.4-low",
+              "gpt-5.4-medium",
+              "gpt-5.4-high",
+              "gpt-5.4-xhigh",
+              "gpt-5.3-codex-low",
+              "gpt-5.3-codex-medium",
+              "gpt-5.3-codex-high",
+              "gpt-5.3-codex-xhigh",
+              "gpt-5.2-codex-low",
+              "gpt-5.2-codex-medium",
+              "gpt-5.2-codex-high",
+              "gpt-5.2-codex-xhigh",
+              "gpt-5.2-low",
+              "gpt-5.2-medium",
+              "gpt-5.2-high",
+              "gpt-5.2-xhigh",
+              "gpt-5.1-codex-mini-low",
+              "gpt-5.1-codex-mini-medium",
+              "gpt-5.1-codex-mini-high",
+              "gpt-5.1-codex-low",
+              "gpt-5.1-codex-medium",
+              "gpt-5.1-codex-high",
+              "gpt-5.1-codex-max-low",
+              "gpt-5.1-codex-max-medium",
+              "gpt-5.1-codex-max-high"
+            ],
+            "description": "Codex CLI virtual model ID: '<base-model>-<effort>'. Effort levels: xhigh, high, medium, low. Default: 'gpt-5.4-mini-low'."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "opencode"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "OpenCode model ID fetched dynamically from `opencode models --verbose`. Variant selections use '<base-model>#<variant>'."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "pi"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Pi model ID fetched dynamically from `pi --list-models`. Thinking selections use '<provider/model>#<thinking>'."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "openrouter"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "OpenRouter model ID (e.g., 'openai/gpt-5.4'). Models are fetched dynamically."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "openai"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "OpenAI model ID (e.g., 'gpt-5.4'). Models are fetched dynamically."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "google-ai-studio"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Google AI Studio model ID (e.g., 'gemini-3.1-pro-preview'). Models are fetched dynamically."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "anthropic"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Anthropic API model ID (e.g., 'claude-sonnet-4-6'). Models are fetched dynamically."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "cerebras"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Cerebras model ID (e.g., 'llama-3.3-70b'). Models are fetched dynamically."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "const": "kiro"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "model": {
+            "enum": [
+              "auto",
+              "claude-sonnet-4-6",
+              "claude-sonnet-4-5",
+              "claude-sonnet-4",
+              "claude-haiku-4-5",
+              "claude-opus-4-6",
+              "claude-opus-4-5",
+              "claude-opus-4-7"
+            ],
+            "description": "Kiro model ID. Authenticates via AWS Builder ID (free tier). 'auto' lets Kiro pick the best model."
+          }
+        }
+      }
+    }
+  ]
+}

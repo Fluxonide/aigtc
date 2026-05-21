@@ -1,0 +1,3 @@
+{
+  "extends": "@aigtc/config/tsconfig.base.json"
+}
