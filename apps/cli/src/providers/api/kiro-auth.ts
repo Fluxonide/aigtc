@@ -513,72 +513,96 @@ async function runOAuthDeviceCodeFlow(): Promise<KiroAuthDetails> {
 // ==============================================================================
 
 /**
+ * Options for getKiroAuth.
+ */
+export interface KiroAuthOptions {
+  /** Skip all caches and the Kiro CLI database — go straight to OAuth device code flow. */
+  forceOAuth?: boolean;
+  /** If true, return null instead of triggering the interactive OAuth flow. */
+  noPrompt?: boolean;
+}
+
+/**
  * Get valid Kiro authentication details.
  * Tries: 1) cached auth → 2) Kiro CLI DB → 3) OAuth device code flow.
+ *
+ * Pass `forceOAuth: true` to skip steps 1-2 and directly open a new browser login.
+ * Pass `noPrompt: true` to silently return `null` instead of opening a browser.
  */
-export async function getKiroAuth(): Promise<KiroAuthDetails> {
-  // Load from persistent cache if available
-  if (!cachedAuth) {
-    const manager = new EncryptedFileSecretsManager();
-    const stored = await manager.getSecret(API_KEY_SERVICE, "kiro_auth_cache");
-    if (stored) {
-      try {
-        cachedAuth = JSON.parse(stored);
-      } catch {}
+export async function getKiroAuth(
+  options?: KiroAuthOptions,
+): Promise<KiroAuthDetails | null> {
+  const forceOAuth = options?.forceOAuth ?? false;
+  const noPrompt = options?.noPrompt ?? false;
+
+  if (!forceOAuth) {
+    // Load from persistent cache if available
+    if (!cachedAuth) {
+      const manager = new EncryptedFileSecretsManager();
+      const stored = await manager.getSecret(API_KEY_SERVICE, "kiro_auth_cache");
+      if (stored) {
+        try {
+          cachedAuth = JSON.parse(stored);
+        } catch {}
+      }
     }
-  }
 
-  // 1. Return cached auth if still valid
-  if (cachedAuth && Date.now() < cachedAuth.expires - 60_000) {
-    return cachedAuth;
-  }
-
-  // If cached auth exists but expired, try refreshing it
-  if (cachedAuth) {
-    try {
-      cachedAuth = await refreshKiroToken(cachedAuth);
+    // 1. Return cached auth if still valid
+    if (cachedAuth && Date.now() < cachedAuth.expires - 60_000) {
       return cachedAuth;
-    } catch {
-      cachedAuth = null;
     }
-  }
 
-  // 2. Try reading from Kiro CLI SQLite database
-  const cliToken = await readFromKiroCli();
-  if (cliToken) {
-    const parts: RefreshParts = {
-      refreshToken: cliToken.refreshToken,
-      clientId: cliToken.clientId,
-      clientSecret: cliToken.clientSecret,
-      authMethod: cliToken.authMethod,
-    };
-
-    const auth: KiroAuthDetails = {
-      refresh: encodeRefreshToken(parts),
-      access: cliToken.accessToken,
-      expires: cliToken.expiresAt,
-      authMethod: cliToken.authMethod,
-      region: cliToken.region,
-      clientId: cliToken.clientId,
-      clientSecret: cliToken.clientSecret,
-      profileArn: cliToken.profileArn,
-    };
-
-    // If the access token is expired, refresh it
-    if (Date.now() >= auth.expires - 120_000) {
+    // If cached auth exists but expired, try refreshing it
+    if (cachedAuth) {
       try {
-        cachedAuth = await refreshKiroToken(auth);
+        cachedAuth = await refreshKiroToken(cachedAuth);
         return cachedAuth;
       } catch {
-        // Refresh failed — fall through to OAuth
+        cachedAuth = null;
       }
-    } else {
-      cachedAuth = auth;
-      return auth;
+    }
+
+    // 2. Try reading from Kiro CLI SQLite database
+    const cliToken = await readFromKiroCli();
+    if (cliToken) {
+      const parts: RefreshParts = {
+        refreshToken: cliToken.refreshToken,
+        clientId: cliToken.clientId,
+        clientSecret: cliToken.clientSecret,
+        authMethod: cliToken.authMethod,
+      };
+
+      const auth: KiroAuthDetails = {
+        refresh: encodeRefreshToken(parts),
+        access: cliToken.accessToken,
+        expires: cliToken.expiresAt,
+        authMethod: cliToken.authMethod,
+        region: cliToken.region,
+        clientId: cliToken.clientId,
+        clientSecret: cliToken.clientSecret,
+        profileArn: cliToken.profileArn,
+      };
+
+      // If the access token is expired, refresh it
+      if (Date.now() >= auth.expires - 120_000) {
+        try {
+          cachedAuth = await refreshKiroToken(auth);
+          return cachedAuth;
+        } catch {
+          // Refresh failed — fall through to OAuth
+        }
+      } else {
+        cachedAuth = auth;
+        return auth;
+      }
     }
   }
 
-  // 3. Run OAuth device code flow
+  // 3. Run OAuth device code flow (or bail out silently)
+  if (noPrompt) return null;
+
+  if (forceOAuth) await clearKiroAuth();
+
   cachedAuth = await runOAuthDeviceCodeFlow();
   const manager = new EncryptedFileSecretsManager();
   await manager.setSecret(API_KEY_SERVICE, "kiro_auth_cache", JSON.stringify(cachedAuth));

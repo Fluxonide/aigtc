@@ -21,6 +21,7 @@ import { cacheModels, type CachedModel } from "../model-cache.ts";
 import { getInstallInfo, ERROR_MESSAGES } from "./constants.ts";
 import { loadDynamicCLIModelsForSetup } from "./dynamic-cli-models.ts";
 import { findRecommendedModel, getModelCatalog } from "../../providers/api/models/index.ts";
+import { getKiroAuth, clearKiroAuth } from "../../providers/api/kiro-auth.ts";
 
 const SPEED_HINT = pc.dim(
   "Generation speed varies by provider and model — some models may be slow.",
@@ -439,7 +440,33 @@ async function setupKiroFlow(ctx: FlowContext): Promise<WizardResult> {
 
   let models: CachedModel[];
 
+  // Check if we already have valid Kiro auth (silently, no browser prompt)
+  const existingAuth = await getKiroAuth({ noPrompt: true }).catch(() => null);
+
+  let forceNewLogin = false;
+  if (existingAuth) {
+    const authChoice = await select({
+      message: "Found existing Kiro authentication. What would you like to do?",
+      options: [
+        { value: "reuse", label: "Use existing account" },
+        { value: "relogin", label: "Login with a different account", hint: "opens browser" },
+      ],
+    });
+
+    if (isCancel(authChoice)) {
+      return { config: null, completed: false };
+    }
+
+    forceNewLogin = authChoice === "relogin";
+  }
+
   try {
+    if (forceNewLogin) {
+      // Clear cached auth and force a fresh OAuth device code flow
+      await clearKiroAuth();
+      await getKiroAuth({ forceOAuth: true });
+    }
+
     // This triggers OAuth device code flow if no stored credentials exist.
     // The user will be prompted to open a browser URL and enter a code.
     const fetchedModels = await adapter.fetchModels();

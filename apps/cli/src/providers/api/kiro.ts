@@ -189,6 +189,9 @@ export const kiroAdapter: APIProviderAdapter = {
 
   async invoke({ model, system, prompt }: InvokeOptions): Promise<string> {
     let auth = await getKiroAuth();
+    if (!auth) {
+      throw new Error("Kiro authentication failed. Run 'aigtc configure' to set up Kiro.");
+    }
 
     // Refresh token if expired (2 min buffer)
     if (Date.now() >= auth.expires - 120_000) {
@@ -258,8 +261,8 @@ export const kiroAdapter: APIProviderAdapter = {
 
   async checkAvailable(): Promise<boolean> {
     try {
-      await getKiroAuth();
-      return true;
+      const auth = await getKiroAuth({ noPrompt: true });
+      return auth !== null;
     } catch {
       return false;
     }
@@ -268,7 +271,10 @@ export const kiroAdapter: APIProviderAdapter = {
   async fetchModels(_apiKey?: string): Promise<APIModelDefinition[]> {
     // Kiro models are fixed (not dynamically fetched from an API).
     // Validate that we have valid auth before returning the list.
-    await getKiroAuth();
+    const auth = await getKiroAuth();
+    if (!auth) {
+      throw new Error("Kiro authentication failed. Run 'aigtc configure' to set up Kiro.");
+    }
     return KIRO_MODELS;
   },
 };
