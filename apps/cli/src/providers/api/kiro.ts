@@ -28,25 +28,60 @@ const KIRO_SDK_VERSION = "3.738.0";
 /** Models available through Kiro's free tier / Builder ID. */
 const KIRO_MODELS: APIModelDefinition[] = [
   { id: "auto", name: "Auto (Kiro picks best)" },
-  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
-  { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
-  { id: "claude-sonnet-4", name: "Claude Sonnet 4" },
+  // Claude Haiku
   { id: "claude-haiku-4-5", name: "Claude Haiku 4.5" },
-  { id: "claude-opus-4-6", name: "Claude Opus 4.6" },
+  // Claude Sonnet
+  { id: "claude-sonnet-4", name: "Claude Sonnet 4" },
+  { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
+  { id: "claude-sonnet-4-5-thinking", name: "Claude Sonnet 4.5 (Thinking)" },
+  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
+  { id: "claude-sonnet-4-6-thinking", name: "Claude Sonnet 4.6 (Thinking)" },
+  { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
+  { id: "claude-sonnet-5-thinking", name: "Claude Sonnet 5 (Thinking)" },
+  // Claude Opus
   { id: "claude-opus-4-5", name: "Claude Opus 4.5" },
+  { id: "claude-opus-4-5-thinking", name: "Claude Opus 4.5 (Thinking)" },
+  { id: "claude-opus-4-6", name: "Claude Opus 4.6" },
+  { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)" },
   { id: "claude-opus-4-7", name: "Claude Opus 4.7" },
+  { id: "claude-opus-4-7-thinking", name: "Claude Opus 4.7 (Thinking)" },
+  { id: "claude-opus-4-8", name: "Claude Opus 4.8" },
+  { id: "claude-opus-4-8-thinking", name: "Claude Opus 4.8 (Thinking)" },
+  { id: "claude-opus-5", name: "Claude Opus 5" },
+  { id: "claude-opus-5-thinking", name: "Claude Opus 5 (Thinking)" },
+  // Open weight models
+  { id: "deepseek-3.2", name: "DeepSeek 3.2" },
+  { id: "qwen3-coder-next", name: "Qwen3 Coder Next" },
 ];
 
 /** Map aigtc model IDs to Kiro's internal model identifiers. */
 const MODEL_MAPPING: Record<string, string> = {
   auto: "auto",
-  "claude-sonnet-4-6": "claude-sonnet-4.6",
-  "claude-sonnet-4-5": "claude-sonnet-4.5",
-  "claude-sonnet-4": "claude-sonnet-4",
+  // Claude Haiku
   "claude-haiku-4-5": "claude-haiku-4.5",
+  "claude-haiku-4-5-thinking": "claude-haiku-4.5",
+  // Claude Sonnet
+  "claude-sonnet-4": "claude-sonnet-4",
+  "claude-sonnet-4-5": "claude-sonnet-4.5",
+  "claude-sonnet-4-5-thinking": "claude-sonnet-4.5",
+  "claude-sonnet-4-6": "claude-sonnet-4.6",
+  "claude-sonnet-4-6-thinking": "claude-sonnet-4.6",
+  "claude-sonnet-5": "claude-sonnet-5",
+  "claude-sonnet-5-thinking": "claude-sonnet-5",
+  // Claude Opus
   "claude-opus-4-5": "claude-opus-4.5",
+  "claude-opus-4-5-thinking": "claude-opus-4.5",
   "claude-opus-4-6": "claude-opus-4.6",
+  "claude-opus-4-6-thinking": "claude-opus-4.6",
   "claude-opus-4-7": "claude-opus-4.7",
+  "claude-opus-4-7-thinking": "claude-opus-4.7",
+  "claude-opus-4-8": "claude-opus-4.8",
+  "claude-opus-4-8-thinking": "claude-opus-4.8",
+  "claude-opus-5": "claude-opus-5",
+  "claude-opus-5-thinking": "claude-opus-5",
+  // Open weight models
+  "deepseek-3.2": "deepseek-3.2",
+  "qwen3-coder-next": "qwen3-coder-next",
 };
 
 function resolveKiroModel(model: string): string {
@@ -219,44 +254,72 @@ export const kiroAdapter: APIProviderAdapter = {
 
     const ua = `aws-sdk-js/${KIRO_SDK_VERSION} ua/2.1 os/${osName} lang/js md/bun#${Bun.version} api/codewhisperer#${KIRO_SDK_VERSION} m/E ${KIRO_USER_AGENT}`;
 
-    const { controller, cleanup } = createTimeoutController(120_000);
+    const MAX_ATTEMPTS = 2;
+    let bearerRetried = false;
 
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${auth.access}`,
-          "amz-sdk-invocation-id": crypto.randomUUID(),
-          "amz-sdk-request": "attempt=1; max=1",
-          "x-amzn-kiro-agent-mode": "vibe",
-          "x-amz-user-agent": `aws-sdk-js/${KIRO_SDK_VERSION} KiroIDE`,
-          "user-agent": ua,
-          Connection: "close",
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const { controller, cleanup } = createTimeoutController(120_000);
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new Error(
-          `Kiro API error (${response.status}): ${errorText.slice(0, 500) || response.statusText}`,
-        );
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${auth.access}`,
+            "amz-sdk-invocation-id": crypto.randomUUID(),
+            "amz-sdk-request": `attempt=${attempt + 1}; max=${MAX_ATTEMPTS}`,
+            "x-amzn-kiro-agent-mode": "vibe",
+            "x-amz-user-agent": `aws-sdk-js/${KIRO_SDK_VERSION} KiroIDE`,
+            "user-agent": ua,
+            Connection: "close",
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+
+          // Auto-retry on 403 bearer-invalid (stale token after idle)
+          if (
+            response.status === 403 &&
+            !bearerRetried &&
+            errorText.includes("bearer token included in the request is invalid")
+          ) {
+            bearerRetried = true;
+            cleanup();
+            auth = await refreshKiroToken(auth);
+            continue;
+          }
+
+          // Auto-retry on 429 rate limit
+          if (response.status === 429 && attempt < MAX_ATTEMPTS - 1) {
+            const retryAfter = parseInt(response.headers.get("retry-after") || "60", 10);
+            cleanup();
+            await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+            continue;
+          }
+
+          throw new Error(
+            `Kiro API error (${response.status}): ${errorText.slice(0, 500) || response.statusText}`,
+          );
+        }
+
+        const text = await parseKiroStreamResponse(response);
+        if (!text) {
+          throw new Error(
+            "Kiro returned an empty response. The model may not have generated any content.",
+          );
+        }
+
+        return text;
+      } finally {
+        cleanup();
       }
-
-      const text = await parseKiroStreamResponse(response);
-      if (!text) {
-        throw new Error(
-          "Kiro returned an empty response. The model may not have generated any content.",
-        );
-      }
-
-      return text;
-    } finally {
-      cleanup();
     }
+
+    throw new Error("Kiro API: all retry attempts exhausted.");
   },
 
   async checkAvailable(): Promise<boolean> {

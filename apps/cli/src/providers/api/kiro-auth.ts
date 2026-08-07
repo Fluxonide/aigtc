@@ -118,15 +118,18 @@ function findClientCreds(input: unknown): { clientId?: string; clientSecret?: st
 
 /**
  * Try to read valid Kiro credentials from the installed Kiro CLI's SQLite DB.
+ * Times out after 3 seconds to avoid hangs when the DB is locked by the Kiro IDE.
  */
 async function readFromKiroCli(): Promise<KiroCliToken | null> {
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3_000));
+  const read = (async (): Promise<KiroCliToken | null> => {
   const dbPath = getCliDbPath();
   if (!existsSync(dbPath)) return null;
 
   try {
     const { Database } = await import("bun:sqlite");
     const db = new Database(dbPath, { readonly: true });
-    db.run("PRAGMA busy_timeout = 5000");
+    db.run("PRAGMA busy_timeout = 2000");
 
     const rows = db.prepare("SELECT key, value FROM auth_kv").all() as Array<{
       key: string;
@@ -207,6 +210,8 @@ async function readFromKiroCli(): Promise<KiroCliToken | null> {
   }
 
   return null;
+  })();
+  return Promise.race([read, timeout]);
 }
 
 // ==============================================================================
@@ -340,45 +345,61 @@ async function runOAuthDeviceCodeFlow(): Promise<KiroAuthDetails> {
   const region = "us-east-1";
 
   // Step 1: Register OIDC client
-  const registerRes = await fetch(`${SSO_OIDC_ENDPOINT}/client/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "User-Agent": "aigtc-cli" },
-    body: JSON.stringify({
-      clientName: "aigtc CLI",
-      clientType: "public",
-      scopes: SCOPES,
-      grantTypes: ["urn:ietf:params:oauth:grant-type:device_code", "refresh_token"],
-    }),
-  });
+  const regController = new AbortController();
+  const regTimeoutId = setTimeout(() => regController.abort(), 60_000);
+  let registerData: Record<string, string>;
+  try {
+    const registerRes = await fetch(`${SSO_OIDC_ENDPOINT}/client/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": "aigtc-cli" },
+      body: JSON.stringify({
+        clientName: "aigtc CLI",
+        clientType: "public",
+        scopes: SCOPES,
+        grantTypes: ["urn:ietf:params:oauth:grant-type:device_code", "refresh_token"],
+      }),
+      signal: regController.signal,
+    });
 
-  if (!registerRes.ok) {
-    const errText = await registerRes.text().catch(() => "");
-    throw new Error(`Kiro client registration failed (${registerRes.status}): ${errText}`);
+    if (!registerRes.ok) {
+      const errText = await registerRes.text().catch(() => "");
+      throw new Error(`Kiro client registration failed (${registerRes.status}): ${errText}`);
+    }
+
+    registerData = (await registerRes.json()) as Record<string, string>;
+  } finally {
+    clearTimeout(regTimeoutId);
   }
-
-  const registerData = (await registerRes.json()) as Record<string, string>;
   const { clientId, clientSecret } = registerData;
   if (!clientId || !clientSecret) {
     throw new Error("Kiro client registration: missing clientId or clientSecret.");
   }
 
   // Step 2: Start device authorization
-  const deviceRes = await fetch(`${SSO_OIDC_ENDPOINT}/device_authorization`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "User-Agent": "aigtc-cli" },
-    body: JSON.stringify({
-      clientId,
-      clientSecret,
-      startUrl: BUILDER_ID_START_URL,
-    }),
-  });
+  const devController = new AbortController();
+  const devTimeoutId = setTimeout(() => devController.abort(), 60_000);
+  let deviceData: Record<string, string | number>;
+  try {
+    const deviceRes = await fetch(`${SSO_OIDC_ENDPOINT}/device_authorization`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": "aigtc-cli" },
+      body: JSON.stringify({
+        clientId,
+        clientSecret,
+        startUrl: BUILDER_ID_START_URL,
+      }),
+      signal: devController.signal,
+    });
 
-  if (!deviceRes.ok) {
-    const errText = await deviceRes.text().catch(() => "");
-    throw new Error(`Kiro device authorization failed (${deviceRes.status}): ${errText}`);
+    if (!deviceRes.ok) {
+      const errText = await deviceRes.text().catch(() => "");
+      throw new Error(`Kiro device authorization failed (${deviceRes.status}): ${errText}`);
+    }
+
+    deviceData = (await deviceRes.json()) as Record<string, string | number>;
+  } finally {
+    clearTimeout(devTimeoutId);
   }
-
-  const deviceData = (await deviceRes.json()) as Record<string, unknown>;
   const {
     verificationUri,
     verificationUriComplete,
@@ -552,10 +573,14 @@ export async function getKiroAuth(
       return cachedAuth;
     }
 
-    // If cached auth exists but expired, try refreshing it
+    // If cached auth exists but expired, try refreshing it (10s timeout)
     if (cachedAuth) {
       try {
-        cachedAuth = await refreshKiroToken(cachedAuth);
+        const refreshPromise = refreshKiroToken(cachedAuth);
+        const refreshTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Token refresh timed out")), 10_000),
+        );
+        cachedAuth = await Promise.race([refreshPromise, refreshTimeout]);
         return cachedAuth;
       } catch {
         cachedAuth = null;
@@ -583,10 +608,14 @@ export async function getKiroAuth(
         profileArn: cliToken.profileArn,
       };
 
-      // If the access token is expired, refresh it
+      // If the access token is expired, refresh it (10s timeout)
       if (Date.now() >= auth.expires - 120_000) {
         try {
-          cachedAuth = await refreshKiroToken(auth);
+          const refreshPromise = refreshKiroToken(auth);
+          const refreshTimeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Token refresh timed out")), 10_000),
+          );
+          cachedAuth = await Promise.race([refreshPromise, refreshTimeout]);
           return cachedAuth;
         } catch {
           // Refresh failed — fall through to OAuth
