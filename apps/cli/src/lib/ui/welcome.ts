@@ -168,12 +168,12 @@ export async function showWelcomeScreen(
 
   lines.push(
     pc.dim(BOX.topLeft) +
-    pc.dim(BOX.horizontal.repeat(titlePadLeft)) +
-    title +
-    pc.dim(BOX.horizontal.repeat(Math.max(0, leftRemaining))) +
-    pc.dim(BOX.horizontalDown) +
-    pc.dim(BOX.horizontal.repeat(rightWidth)) +
-    pc.dim(BOX.topRight),
+      pc.dim(BOX.horizontal.repeat(titlePadLeft)) +
+      title +
+      pc.dim(BOX.horizontal.repeat(Math.max(0, leftRemaining))) +
+      pc.dim(BOX.horizontalDown) +
+      pc.dim(BOX.horizontal.repeat(rightWidth)) +
+      pc.dim(BOX.topRight),
   );
 
   // Content rows with middle divider
@@ -185,10 +185,10 @@ export async function showWelcomeScreen(
     if (rightItem === null) {
       lines.push(
         pc.dim(BOX.vertical) +
-        leftCell +
-        pc.dim(BOX.verticalRight) +
-        pc.dim(BOX.horizontal.repeat(rightWidth)) +
-        pc.dim(BOX.verticalLeft),
+          leftCell +
+          pc.dim(BOX.verticalRight) +
+          pc.dim(BOX.horizontal.repeat(rightWidth)) +
+          pc.dim(BOX.verticalLeft),
       );
     } else {
       const rightCell = padTo(rightItem || "", rightWidth);
@@ -201,10 +201,10 @@ export async function showWelcomeScreen(
   // Bottom border (connects to clack UI below)
   lines.push(
     pc.dim(BOX.verticalRight) +
-    pc.dim(BOX.horizontal.repeat(leftWidth)) +
-    pc.dim(BOX.horizontalUp) +
-    pc.dim(BOX.horizontal.repeat(rightWidth)) +
-    pc.dim(BOX.bottomRight),
+      pc.dim(BOX.horizontal.repeat(leftWidth)) +
+      pc.dim(BOX.horizontalUp) +
+      pc.dim(BOX.horizontal.repeat(rightWidth)) +
+      pc.dim(BOX.bottomRight),
   );
 
   // Render

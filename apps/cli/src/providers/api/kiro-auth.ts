@@ -123,93 +123,93 @@ function findClientCreds(input: unknown): { clientId?: string; clientSecret?: st
 async function readFromKiroCli(): Promise<KiroCliToken | null> {
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3_000));
   const read = (async (): Promise<KiroCliToken | null> => {
-  const dbPath = getCliDbPath();
-  if (!existsSync(dbPath)) return null;
+    const dbPath = getCliDbPath();
+    if (!existsSync(dbPath)) return null;
 
-  try {
-    const { Database } = await import("bun:sqlite");
-    const db = new Database(dbPath, { readonly: true });
-    db.run("PRAGMA busy_timeout = 2000");
-
-    const rows = db.prepare("SELECT key, value FROM auth_kv").all() as Array<{
-      key: string;
-      value: string;
-    }>;
-
-    // Find device registration for client creds
-    const deviceRegRow = rows.find(
-      (r) => typeof r?.key === "string" && r.key.includes("device-registration"),
-    );
-    const deviceReg = safeJsonParse(deviceRegRow?.value);
-    const regCreds = deviceReg ? findClientCreds(deviceReg) : {};
-
-    // Find active profile ARN
-    let activeProfileArn: string | undefined;
     try {
-      const stateRow = db
-        .prepare("SELECT value FROM state WHERE key = ?")
-        .get("api.codewhisperer.profile") as { value: string } | undefined;
-      const parsed = safeJsonParse(stateRow?.value);
-      const arn =
-        (parsed?.arn as string) ||
-        (parsed?.profileArn as string) ||
-        (parsed?.profile_arn as string);
-      if (typeof arn === "string" && arn.trim()) activeProfileArn = arn.trim();
-    } catch {
-      // Ignore state read failures
-    }
+      const { Database } = await import("bun:sqlite");
+      const db = new Database(dbPath, { readonly: true });
+      db.run("PRAGMA busy_timeout = 2000");
 
-    for (const row of rows) {
-      if (!row.key.includes(":token")) continue;
+      const rows = db.prepare("SELECT key, value FROM auth_kv").all() as Array<{
+        key: string;
+        value: string;
+      }>;
 
-      const data = safeJsonParse(row.value);
-      if (!data) continue;
+      // Find device registration for client creds
+      const deviceRegRow = rows.find(
+        (r) => typeof r?.key === "string" && r.key.includes("device-registration"),
+      );
+      const deviceReg = safeJsonParse(deviceRegRow?.value);
+      const regCreds = deviceReg ? findClientCreds(deviceReg) : {};
 
-      const isIdc = row.key.includes("odic");
-      const authMethod = isIdc ? "idc" : "desktop";
-      const region = (data.region as string) || "us-east-1";
+      // Find active profile ARN
+      let activeProfileArn: string | undefined;
+      try {
+        const stateRow = db
+          .prepare("SELECT value FROM state WHERE key = ?")
+          .get("api.codewhisperer.profile") as { value: string } | undefined;
+        const parsed = safeJsonParse(stateRow?.value);
+        const arn =
+          (parsed?.arn as string) ||
+          (parsed?.profileArn as string) ||
+          (parsed?.profile_arn as string);
+        if (typeof arn === "string" && arn.trim()) activeProfileArn = arn.trim();
+      } catch {
+        // Ignore state read failures
+      }
 
-      const accessToken = ((data.access_token || data.accessToken) as string) || "";
-      const refreshToken = (data.refresh_token || data.refreshToken) as string;
-      if (!refreshToken) continue;
+      for (const row of rows) {
+        if (!row.key.includes(":token")) continue;
 
-      const clientId =
-        (data.client_id as string) ||
-        (data.clientId as string) ||
-        (isIdc ? regCreds.clientId : undefined);
-      const clientSecret =
-        (data.client_secret as string) ||
-        (data.clientSecret as string) ||
-        (isIdc ? regCreds.clientSecret : undefined);
+        const data = safeJsonParse(row.value);
+        if (!data) continue;
 
-      if (authMethod === "idc" && (!clientId || !clientSecret)) continue;
+        const isIdc = row.key.includes("odic");
+        const authMethod = isIdc ? "idc" : "desktop";
+        const region = (data.region as string) || "us-east-1";
 
-      const expiresAt =
-        normalizeExpiresAt(data.expires_at ?? data.expiresAt) || Date.now() + 3600000;
+        const accessToken = ((data.access_token || data.accessToken) as string) || "";
+        const refreshToken = (data.refresh_token || data.refreshToken) as string;
+        if (!refreshToken) continue;
 
-      let profileArn = (data.profile_arn || data.profileArn) as string | undefined;
-      if (!profileArn && isIdc) profileArn = activeProfileArn;
+        const clientId =
+          (data.client_id as string) ||
+          (data.clientId as string) ||
+          (isIdc ? regCreds.clientId : undefined);
+        const clientSecret =
+          (data.client_secret as string) ||
+          (data.clientSecret as string) ||
+          (isIdc ? regCreds.clientSecret : undefined);
+
+        if (authMethod === "idc" && (!clientId || !clientSecret)) continue;
+
+        const expiresAt =
+          normalizeExpiresAt(data.expires_at ?? data.expiresAt) || Date.now() + 3600000;
+
+        let profileArn = (data.profile_arn || data.profileArn) as string | undefined;
+        if (!profileArn && isIdc) profileArn = activeProfileArn;
+
+        db.close();
+
+        return {
+          refreshToken,
+          accessToken,
+          expiresAt,
+          authMethod: authMethod as "idc" | "desktop",
+          region,
+          clientId,
+          clientSecret,
+          profileArn,
+        };
+      }
 
       db.close();
-
-      return {
-        refreshToken,
-        accessToken,
-        expiresAt,
-        authMethod: authMethod as "idc" | "desktop",
-        region,
-        clientId,
-        clientSecret,
-        profileArn,
-      };
+    } catch {
+      // SQLite read failed — fall through to OAuth flow
     }
 
-    db.close();
-  } catch {
-    // SQLite read failed — fall through to OAuth flow
-  }
-
-  return null;
+    return null;
   })();
   return Promise.race([read, timeout]);
 }
@@ -418,7 +418,7 @@ async function runOAuthDeviceCodeFlow(): Promise<KiroAuthDetails> {
   log.info(pc.bold("🔐 Kiro / AWS Builder ID Authentication"));
   log.info("");
   log.info(`  Open this URL in your browser:`);
-  log.info(`  ${pc.cyan(verificationUriComplete as string || verificationUri as string)}`);
+  log.info(`  ${pc.cyan((verificationUriComplete as string) || (verificationUri as string))}`);
   log.info("");
   log.info(`  Your code: ${pc.bold(pc.yellow(userCode as string))}`);
   log.info("");
@@ -550,9 +550,7 @@ export interface KiroAuthOptions {
  * Pass `forceOAuth: true` to skip steps 1-2 and directly open a new browser login.
  * Pass `noPrompt: true` to silently return `null` instead of opening a browser.
  */
-export async function getKiroAuth(
-  options?: KiroAuthOptions,
-): Promise<KiroAuthDetails | null> {
+export async function getKiroAuth(options?: KiroAuthOptions): Promise<KiroAuthDetails | null> {
   const forceOAuth = options?.forceOAuth ?? false;
   const noPrompt = options?.noPrompt ?? false;
 

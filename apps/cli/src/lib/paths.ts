@@ -15,10 +15,7 @@ const isWindows = process.platform === "win32";
  */
 export function resolveConfigDir(): string {
   if (isWindows) {
-    return path.join(
-      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
-      "aigtc",
-    );
+    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "aigtc");
   }
   const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
   return path.join(xdgConfig, "aigtc");

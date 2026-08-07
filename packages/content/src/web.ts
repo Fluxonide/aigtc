@@ -77,7 +77,11 @@ export const hero: HeroContent = {
 export const installTabs: readonly InstallTab[] = [
   { id: "npm", label: "npm", command: "npm install -g @aigtc/cli" },
   { id: "brew", label: "brew", command: "brew install sadiksaifi/tap/aigtc" },
-  { id: "curl", label: "curl", command: "curl -fsSL https://github.com/Fluxonide/aigtc/install | bash" },
+  {
+    id: "curl",
+    label: "curl",
+    command: "curl -fsSL https://github.com/Fluxonide/aigtc/install | bash",
+  },
   {
     id: "source",
     label: "source",

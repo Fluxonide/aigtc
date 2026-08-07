@@ -1,13 +1,6 @@
 import type { APIProviderAdapter, APIModelDefinition, InvokeOptions } from "../types.ts";
-import {
-  createTimeoutController,
-  COMMON_HEADERS,
-} from "./utils.ts";
-import {
-  getKiroAuth,
-  refreshKiroToken,
-  type KiroAuthDetails,
-} from "./kiro-auth.ts";
+import { createTimeoutController } from "./utils.ts";
+import { getKiroAuth, refreshKiroToken } from "./kiro-auth.ts";
 
 // ==============================================================================
 // KIRO API ADAPTER
@@ -341,4 +334,3 @@ export const kiroAdapter: APIProviderAdapter = {
     return KIRO_MODELS;
   },
 };
-
