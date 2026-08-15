@@ -97,11 +97,6 @@ export function getModelsDevCacheFilePath(): string {
   return path.join(CACHE_DIR, "models-dev-catalog.json");
 }
 
-// ── Data Files ─────────────────────────────────────────────────────
-// Managed settings files for child CLI invocations (Gemini, Codex, etc.)
-
-export const GEMINI_SETTINGS_FILE = path.join(DATA_DIR, "gemini-settings.json");
-
 // ── Secrets ─────────────────────────────────────────────────────────
 
 export const SECRETS_FILE = path.join(CONFIG_DIR, "secrets.enc");
