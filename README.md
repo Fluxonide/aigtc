@@ -9,7 +9,7 @@ A CLI tool that leverages AI to automatically generate semantically correct, con
 - 🤖 **AI-Powered** - Analyzes diffs and understands the _intent_ of your changes
 - 📝 **Conventional Commits** - Strictly adheres to [v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification
 - 🎨 **Interactive TUI** - Beautiful prompts for staging, editing, and confirming
-- 🔌 **Multiple Providers** - Claude Code, Gemini CLI, Codex, OpenCode, Pi, OpenRouter, OpenAI, Anthropic, Google AI Studio, Cerebras
+- 🔌 **Multiple Providers** - Claude Code, Antigravity CLI, Codex, OpenCode, Pi, OpenRouter, OpenAI, Anthropic, Google AI Studio, Cerebras
 - 🔐 **Secure** - API keys stored in keychain, never in config files
 
 ## Installation
@@ -98,7 +98,7 @@ Info:
 aigtc
 
 # Override provider for this run
-aigtc --provider gemini-cli --model gemini-3-flash-preview
+aigtc --provider antigravity-cli --model gemini-3.7-flash-medium
 
 # Use Codex with reasoning effort baked in
 aigtc --provider codex --model gpt-5.3-codex-low
@@ -127,7 +127,7 @@ aigtc --dry-run -A
 | Provider         | ID                 | Type | Requirements                                                                            |
 | :--------------- | :----------------- | :--- | :-------------------------------------------------------------------------------------- |
 | Claude Code      | `claude-code`      | CLI  | [Install CLI](https://claude.com/claude-code)                                           |
-| Gemini CLI       | `gemini-cli`       | CLI  | [Install CLI](https://ai.google.dev/gemini-api/docs/cli)                                |
+| Antigravity CLI  | `antigravity-cli`  | CLI  | [Install CLI](https://antigravity.google/docs/cli/reference)                             |
 | Codex            | `codex`            | CLI  | [Install CLI](https://developers.openai.com/codex/cli)                                  |
 | OpenCode         | `opencode`         | CLI  | [Install CLI](https://opencode.ai)                                                       |
 | Pi               | `pi`               | CLI  | [Install CLI](https://pi.dev)                                                            |

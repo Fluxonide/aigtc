@@ -86,6 +86,26 @@ export const migrations: ConfigMigration[] = [
       return null;
     },
   },
+  {
+    id: "gemini-cli-to-antigravity",
+    description: "Migrate 'gemini-cli' provider to 'antigravity-cli'",
+    migrate(config) {
+      if (config.provider === "gemini-cli") {
+        config.provider = "antigravity-cli";
+        const changes: string[] = ["Migrated provider 'gemini-cli' → 'antigravity-cli'"];
+        if (
+          typeof config.model === "string" &&
+          (config.model.includes("gemini-3-flash") || config.model.includes("preview"))
+        ) {
+          const oldModel = config.model;
+          config.model = "gemini-3.7-flash-medium";
+          changes.push(`Migrated model '${oldModel}' → 'gemini-3.7-flash-medium'`);
+        }
+        return changes.join(", ");
+      }
+      return null;
+    },
+  },
 ];
 
 // ─── MIGRATION ENGINE ─────────────────────────────────────────────────

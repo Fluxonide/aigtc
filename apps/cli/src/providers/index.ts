@@ -10,7 +10,7 @@ import { getAPIAdapter, getAPIProviderIds } from "./api/index.ts";
  * Get a provider adapter by provider ID.
  * Automatically routes to the correct adapter based on provider ID.
  *
- * @param providerId - The provider ID (e.g., "gemini-cli", "claude-code", "openrouter")
+ * @param providerId - The provider ID (e.g., "antigravity-cli", "claude-code", "openrouter")
  * @returns The provider adapter or undefined if not found
  */
 export function getAdapter(providerId: string): ProviderAdapter | undefined {

@@ -12,7 +12,6 @@ import {
   getModelsDevCacheFilePath,
   SECRETS_FILE,
   TEMP_MSG_FILE,
-  GEMINI_SETTINGS_FILE,
   resolveConfigDir,
   resolveCacheDir,
   resolveDataDir,
@@ -176,12 +175,6 @@ describe("paths", () => {
         process.env.AI_GIT_MODELS_DEV_CACHE_FILE = "/tmp/custom-cache.json";
         expect(getModelsDevCacheFilePath()).toBe("/tmp/custom-cache.json");
       });
-    });
-  });
-
-  describe("data files", () => {
-    it("GEMINI_SETTINGS_FILE is gemini-settings.json inside DATA_DIR", () => {
-      expect(GEMINI_SETTINGS_FILE).toBe(path.join(DATA_DIR, "gemini-settings.json"));
     });
   });
 

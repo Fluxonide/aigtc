@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { migrateConfig, migrations, type MigrationResult } from "./migration.ts";
+import { migrateConfig, migrations } from "./migration.ts";
 
 describe("migrations registry", () => {
   it("should have unique IDs", () => {
@@ -20,12 +20,24 @@ describe("migrations registry", () => {
 
 describe("migrateConfig", () => {
   it("should strip legacy 'mode' property", () => {
-    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview", mode: "cli" };
+    const raw = { provider: "codex", model: "gpt-5.4-medium", mode: "cli" };
     const result = migrateConfig(raw);
-    expect(result.config).toEqual({ provider: "gemini-cli", model: "gemini-3-flash-preview" });
+    expect(result.config).toEqual({ provider: "codex", model: "gpt-5.4-medium" });
     expect(result.changed).toBe(true);
     expect(result.changes).toHaveLength(1);
     expect(result.changes[0]).toContain("mode");
+  });
+
+  it("should migrate gemini-cli to antigravity-cli", () => {
+    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview" };
+    const result = migrateConfig(raw);
+    expect(result.config).toEqual({
+      provider: "antigravity-cli",
+      model: "gemini-3.7-flash-medium",
+    });
+    expect(result.changed).toBe(true);
+    expect(result.changes).toHaveLength(1);
+    expect(result.changes[0]).toContain("antigravity-cli");
   });
 
   it("should migrate plain claude-code model IDs to effort defaults", () => {
@@ -97,7 +109,7 @@ describe("migrateConfig", () => {
   });
 
   it("should return unchanged for a fully valid config", () => {
-    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview" };
+    const raw = { provider: "antigravity-cli", model: "gemini-3.7-flash-medium" };
     const result = migrateConfig(raw);
     expect(result.config).toEqual(raw);
     expect(result.changed).toBe(false);

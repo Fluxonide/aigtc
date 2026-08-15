@@ -100,21 +100,29 @@ export const PROVIDERS: ProviderDefinition[] = [
     ],
   },
   {
-    id: "gemini-cli",
-    name: "Gemini CLI",
+    id: "antigravity-cli",
+    name: "Antigravity CLI",
     mode: "cli",
-    binary: "gemini",
+    binary: "agy",
     models: [
       {
-        id: "gemini-3-flash-preview",
-        name: "Gemini 3 Flash Preview",
+        id: "gemini-3.7-flash-medium",
+        name: "Gemini 3.7 Flash (Medium)",
         isRecommended: true,
       },
-      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview" },
-      { id: "gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
-      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+      { id: "gemini-3.7-flash-high", name: "Gemini 3.7 Flash (High)" },
+      { id: "gemini-3.7-flash-low", name: "Gemini 3.7 Flash (Low)" },
+      { id: "gemini-3.6-flash-medium", name: "Gemini 3.6 Flash (Medium)" },
+      { id: "gemini-3.6-flash-high", name: "Gemini 3.6 Flash (High)" },
+      { id: "gemini-3.6-flash-low", name: "Gemini 3.6 Flash (Low)" },
+      { id: "gemini-3.5-flash-medium", name: "Gemini 3.5 Flash (Medium)" },
+      { id: "gemini-3.5-flash-high", name: "Gemini 3.5 Flash (High)" },
+      { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Low)" },
+      { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro (High)" },
+      { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)" },
+      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6 (Thinking)" },
+      { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)" },
+      { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)" },
     ],
   },
 
@@ -171,7 +179,7 @@ export const PROVIDERS: ProviderDefinition[] = [
 // ==============================================================================
 
 /**
- * Find a provider by its ID (e.g., "gemini-cli", "claude-code").
+ * Find a provider by its ID (e.g., "antigravity-cli", "claude-code").
  */
 export function getProviderById(id: string): ProviderDefinition | undefined {
   return PROVIDERS.find((p) => p.id === id);
