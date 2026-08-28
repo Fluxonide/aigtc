@@ -128,9 +128,10 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          scope: "@aigtc"
 
-      - name: Install latest npm
-        run: npm install -g npm@latest
+      - name: Verify npm authentication
+        run: npm whoami
 
       - name: Download release artifacts
         env:
