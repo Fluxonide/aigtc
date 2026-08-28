@@ -13,7 +13,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Fluxonide/aigtc"
+    "url": "git+https://github.com/Fluxonide/aigtc.git"
   },
   "bin": {
     "aigtc": "bin/aigtc"
