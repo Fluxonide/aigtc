@@ -50,7 +50,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 3000;
 
 /** GitHub repository (owner/name) */
-export const GITHUB_REPO = "sadiksaifi/aigtc";
+export const GITHUB_REPO = "Fluxonide/aigtc";
 
 /** GitHub API endpoint */
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -210,7 +210,7 @@ async function performUpdateCheck(currentVersion: string): Promise<UpdateCheckRe
  */
 export function startUpdateCheck(currentVersion: string): Promise<UpdateCheckResult> {
   // Test/CI escape hatch for deterministic runs without network calls.
-  if (process.env.AI_GIT_DISABLE_UPDATE_CHECK === "1") {
+  if (process.env.AIGTC_DISABLE_UPDATE_CHECK === "1") {
     return Promise.resolve({
       updateAvailable: false,
       latestVersion: null,

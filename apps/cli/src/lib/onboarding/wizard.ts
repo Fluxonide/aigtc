@@ -21,7 +21,6 @@ import { cacheModels, type CachedModel } from "../model-cache.ts";
 import { getInstallInfo, ERROR_MESSAGES } from "./constants.ts";
 import { loadDynamicCLIModelsForSetup } from "./dynamic-cli-models.ts";
 import { findRecommendedModel, getModelCatalog } from "../../providers/api/models/index.ts";
-import { getKiroAuth, clearKiroAuth } from "../../providers/api/kiro-auth.ts";
 
 const SPEED_HINT = pc.dim(
   "Generation speed varies by provider and model — some models may be slow.",
@@ -90,9 +89,7 @@ export async function runWizard(options: WizardOptions): Promise<WizardResult> {
         hint = "recommended";
       }
     } else if (isApi) {
-      if (p.id === "kiro") {
-        hint = pc.green("free, no API key");
-      } else if (p.isRecommended) {
+      if (p.isRecommended) {
         hint = "recommended";
       }
     }
@@ -213,7 +210,7 @@ async function setupCLIFlow(
       models = await loadDynamicCLIModelsForSetup(providerId, { providerName: providerDef.name });
       s.stop(pc.green(`Found ${models.length} models`));
     } catch (error) {
-      s.stop(pc.red("Error fetching models"));
+      s.error("Error fetching models");
       log.error("");
       log.error(pc.red(error instanceof Error ? error.message : "Model listing failed."));
       log.error("");
@@ -238,7 +235,7 @@ async function setupCLIFlow(
     }
 
     const selectedModel = await selectModel(models, providerId, defaults?.model, {
-      showRecommended: false,
+      showRecommended: getDynamicRecommendation(models) !== undefined,
     });
     if (!selectedModel) {
       return { config: null, completed: false };
@@ -290,11 +287,6 @@ async function setupCLIFlow(
 // ==============================================================================
 
 async function setupAPIFlow(ctx: FlowContext, providerId: string): Promise<WizardResult> {
-  // Kiro uses OAuth (no API key) — route to its own setup flow.
-  if (providerId === "kiro") {
-    return await setupKiroFlow(ctx);
-  }
-
   const { defaults, target } = ctx;
 
   const providerDef = getProviderById(providerId);
@@ -338,7 +330,7 @@ async function setupAPIFlow(ctx: FlowContext, providerId: string): Promise<Wizar
   try {
     const adapter = getAPIAdapter(providerId);
     if (!adapter) {
-      s.stop(pc.red("Error: Provider adapter not found"));
+      s.error("Error: Provider adapter not found");
       return { config: null, completed: false };
     }
 
@@ -346,7 +338,7 @@ async function setupAPIFlow(ctx: FlowContext, providerId: string): Promise<Wizar
     const fetchedModels = await adapter.fetchModels(apiKey);
 
     if (fetchedModels.length === 0) {
-      s.stop(pc.red("Error: No models available"));
+      s.error("Error: No models available");
       log.error(pc.red("The API returned no models. Please check your API key."));
       return { config: null, completed: false };
     }
@@ -366,7 +358,7 @@ async function setupAPIFlow(ctx: FlowContext, providerId: string): Promise<Wizar
 
     s.stop(pc.green(`Found ${models.length} models`));
   } catch (error) {
-    s.stop(pc.red("Error validating API key"));
+    s.error("Error validating API key");
     log.error("");
     log.error(pc.red(`API Error: ${error instanceof Error ? error.message : "Unknown error"}`));
     log.error("");
@@ -416,125 +408,6 @@ async function setupAPIFlow(ctx: FlowContext, providerId: string): Promise<Wizar
 }
 
 // ==============================================================================
-// KIRO SETUP FLOW (OAuth, no API key)
-// ==============================================================================
-
-/**
- * Setup flow for Kiro. Uses OAuth device code instead of API key prompt.
- * Authenticates via AWS Builder ID / IAM Identity Center.
- */
-async function setupKiroFlow(ctx: FlowContext): Promise<WizardResult> {
-  const { defaults, target } = ctx;
-
-  const providerDef = getProviderById("kiro");
-  if (!providerDef) {
-    log.error(pc.red("Error: Kiro provider not found."));
-    return { config: null, completed: false };
-  }
-
-  const adapter = getAPIAdapter("kiro");
-  if (!adapter) {
-    log.error(pc.red("Error: Kiro adapter not found."));
-    return { config: null, completed: false };
-  }
-
-  let models: CachedModel[];
-
-  // Check if we already have valid Kiro auth (silently, no browser prompt)
-  const existingAuth = await getKiroAuth({ noPrompt: true }).catch(() => null);
-
-  let forceNewLogin = false;
-  if (existingAuth) {
-    const authChoice = await select({
-      message: "Found existing Kiro authentication. What would you like to do?",
-      options: [
-        { value: "reuse", label: "Use existing account" },
-        { value: "relogin", label: "Login with a different account", hint: "opens browser" },
-      ],
-    });
-
-    if (isCancel(authChoice)) {
-      return { config: null, completed: false };
-    }
-
-    forceNewLogin = authChoice === "relogin";
-  }
-
-  try {
-    if (forceNewLogin) {
-      // Clear cached auth and force a fresh OAuth device code flow
-      await clearKiroAuth();
-      await getKiroAuth({ forceOAuth: true });
-    }
-
-    // This triggers OAuth device code flow if no stored credentials exist.
-    // The user will be prompted to open a browser URL and enter a code.
-    const fetchedModels = await adapter.fetchModels();
-
-    if (fetchedModels.length === 0) {
-      log.error(pc.red("No Kiro models available."));
-      return { config: null, completed: false };
-    }
-
-    models = fetchedModels.map((m) => ({
-      id: m.id,
-      name: m.name,
-      provider: m.provider,
-    }));
-
-    // Cache the models
-    await cacheModels("kiro", models);
-  } catch (error) {
-    log.error("");
-    log.error(
-      pc.red(`Kiro auth error: ${error instanceof Error ? error.message : "Unknown error"}`),
-    );
-    log.error("");
-    log.error(pc.dim("Make sure you have an AWS Builder ID or the Kiro CLI installed."));
-
-    const retry = await select({
-      message: "What would you like to do?",
-      options: [
-        { value: "retry", label: "Try again" },
-        { value: "exit", label: "Exit setup" },
-      ],
-    });
-
-    if (isCancel(retry) || retry === "exit") {
-      return { config: null, completed: false };
-    }
-
-    return await setupKiroFlow(ctx);
-  }
-
-  // Select model
-  const model = await selectModel(models, "kiro", defaults?.model, {
-    showRecommended: false,
-  });
-  if (!model) {
-    return { config: null, completed: false };
-  }
-
-  // Save configuration
-  const config: UserConfig = {
-    provider: "kiro",
-    model,
-  };
-
-  if (target === "global") {
-    await saveUserConfig(config);
-  } else {
-    await saveProjectConfig(config);
-  }
-
-  const modelName = models.find((m) => m.id === model)?.name ?? model;
-  log.success(`${pc.cyan("Kiro")} → ${pc.cyan(modelName)}`);
-  log.info(SPEED_HINT);
-
-  return { config, completed: true };
-}
-
-// ==============================================================================
 // HELPER FUNCTIONS
 // ==============================================================================
 
@@ -571,6 +444,10 @@ export function formatModelChoiceTitle(
   return showRecommended && modelId === recommendedModel ? `${modelName} (recommended)` : modelName;
 }
 
+export function getDynamicRecommendation(models: CachedModel[]): string | undefined {
+  return models.find((model) => model.isRecommended)?.id;
+}
+
 /**
  * Select a model with fuzzy search support for large lists.
  */
@@ -582,7 +459,9 @@ async function selectModel(
 ): Promise<string | null> {
   // Find the recommended default model
   const showRecommended = options?.showRecommended ?? true;
-  let recommendedModel = showRecommended ? defaultModel : undefined;
+  let recommendedModel = showRecommended
+    ? (getDynamicRecommendation(models) ?? defaultModel)
+    : undefined;
 
   if (showRecommended && !recommendedModel) {
     try {

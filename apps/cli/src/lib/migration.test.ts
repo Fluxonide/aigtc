@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { migrateConfig, migrations } from "./migration.ts";
+import { migrateConfig, migrateLegacyGeminiCliConfig, migrations } from "./migration.ts";
 
 describe("migrations registry", () => {
   it("should have unique IDs", () => {
@@ -20,24 +20,12 @@ describe("migrations registry", () => {
 
 describe("migrateConfig", () => {
   it("should strip legacy 'mode' property", () => {
-    const raw = { provider: "codex", model: "gpt-5.4-medium", mode: "cli" };
+    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview", mode: "cli" };
     const result = migrateConfig(raw);
-    expect(result.config).toEqual({ provider: "codex", model: "gpt-5.4-medium" });
+    expect(result.config).toEqual({ provider: "gemini-cli", model: "gemini-3-flash-preview" });
     expect(result.changed).toBe(true);
     expect(result.changes).toHaveLength(1);
     expect(result.changes[0]).toContain("mode");
-  });
-
-  it("should migrate gemini-cli to antigravity-cli", () => {
-    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview" };
-    const result = migrateConfig(raw);
-    expect(result.config).toEqual({
-      provider: "antigravity-cli",
-      model: "gemini-3.7-flash-medium",
-    });
-    expect(result.changed).toBe(true);
-    expect(result.changes).toHaveLength(1);
-    expect(result.changes[0]).toContain("antigravity-cli");
   });
 
   it("should migrate plain claude-code model IDs to effort defaults", () => {
@@ -74,12 +62,65 @@ describe("migrateConfig", () => {
     expect(result.changes).toHaveLength(0);
   });
 
-  it("should NOT migrate non-claude-code providers", () => {
-    const raw = { provider: "codex", model: "gpt-5.3-codex-low" };
+  it("should NOT apply Codex model migration to another provider", () => {
+    const raw = { provider: "openai", model: "gpt-5.3-codex-low" };
     const result = migrateConfig(raw);
     expect(result.config.model).toBe("gpt-5.3-codex-low");
     expect(result.changed).toBe(false);
     expect(result.changes).toHaveLength(0);
+  });
+
+  const codexFamilyMigrations = [
+    ["gpt-5.4-mini", "gpt-5.6-luna", ["low", "medium", "high", "xhigh"]],
+    ["gpt-5.4", "gpt-5.6-terra", ["low", "medium", "high", "xhigh"]],
+    ["gpt-5.1-codex-mini", "gpt-5.6-terra", ["low", "medium", "high"]],
+    ["gpt-5.1-codex", "gpt-5.6-sol", ["low", "medium", "high"]],
+    ["gpt-5.1-codex-max", "gpt-5.6-sol", ["low", "medium", "high"]],
+    ["gpt-5.2-codex", "gpt-5.6-sol", ["low", "medium", "high", "xhigh"]],
+    ["gpt-5.3-codex", "gpt-5.6-sol", ["low", "medium", "high", "xhigh"]],
+    ["gpt-5.2", "gpt-5.6-terra", ["low", "medium", "high", "xhigh"]],
+  ] as const;
+
+  for (const [legacyFamily, currentFamily, efforts] of codexFamilyMigrations) {
+    for (const effort of efforts) {
+      it(`migrates ${legacyFamily}-${effort} to ${currentFamily}-${effort}`, () => {
+        const result = migrateConfig({ provider: "codex", model: `${legacyFamily}-${effort}` });
+
+        expect(result.config.model).toBe(`${currentFamily}-${effort}`);
+        expect(result.changed).toBe(true);
+        expect(result.changes[0]).toContain(`${legacyFamily}-${effort}`);
+        expect(result.changes[0]).toContain(`${currentFamily}-${effort}`);
+      });
+    }
+  }
+
+  it.each(codexFamilyMigrations.map(([legacy, current]) => [legacy, `${current}-low`] as const))(
+    "migrates bare legacy Codex model %s deterministically",
+    (legacyModel, expectedModel) => {
+      expect(migrateConfig({ provider: "codex", model: legacyModel }).config.model).toBe(
+        expectedModel,
+      );
+    },
+  );
+
+  it("matches the full GPT-5.1 Codex Max family before interpreting effort suffixes", () => {
+    expect(migrateConfig({ provider: "codex", model: "gpt-5.1-codex-max" }).config.model).toBe(
+      "gpt-5.6-sol-low",
+    );
+  });
+
+  it("does not migrate the current GPT-5.3 Codex Spark family", () => {
+    const raw = { provider: "codex", model: "gpt-5.3-codex-spark-low" };
+    expect(migrateConfig(raw)).toEqual({ config: raw, changed: false, changes: [] });
+  });
+
+  it("is idempotent after a retired Codex model is migrated", () => {
+    const first = migrateConfig({ provider: "codex", model: "gpt-5.4-high" });
+    expect(migrateConfig(first.config as Record<string, unknown>)).toEqual({
+      config: first.config,
+      changed: false,
+      changes: [],
+    });
   });
 
   it("should handle both mode removal and model migration together", () => {
@@ -109,10 +150,30 @@ describe("migrateConfig", () => {
   });
 
   it("should return unchanged for a fully valid config", () => {
-    const raw = { provider: "antigravity-cli", model: "gemini-3.7-flash-medium" };
+    const raw = { provider: "gemini-cli", model: "gemini-3-flash-preview" };
     const result = migrateConfig(raw);
     expect(result.config).toEqual(raw);
     expect(result.changed).toBe(false);
     expect(result.changes).toHaveLength(0);
+  });
+});
+
+describe("migrateLegacyGeminiCliConfig", () => {
+  it("updates the provider and model together from the live Antigravity catalog", async () => {
+    const result = await migrateLegacyGeminiCliConfig(
+      { provider: "gemini-cli", model: "gemini-3.1-pro-preview" },
+      async () => [
+        { id: "gemini-3.7-flash-low", name: "Gemini 3.7 Flash (Low)" },
+        { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)" },
+      ],
+    );
+
+    expect(result).toEqual({
+      config: { provider: "antigravity-cli", model: "gemini-3.1-pro-low" },
+      changed: true,
+      changes: [
+        "Migrated provider 'gemini-cli' → 'antigravity-cli' and model 'gemini-3.1-pro-preview' → 'gemini-3.1-pro-low'",
+      ],
+    });
   });
 });

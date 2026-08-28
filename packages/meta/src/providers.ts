@@ -25,9 +25,9 @@ export const PROVIDERS: Record<string, ProviderDoc | CLIProviderDoc> = {
     name: "Antigravity CLI",
     type: "cli",
     binary: "agy",
-    installCommand: "curl -fsSL https://antigravity.google/install | bash",
-    docsUrl: "https://antigravity.google/docs/cli/reference",
-    requirementsUrl: "https://antigravity.google/docs/cli/reference",
+    installCommand: "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+    docsUrl: "https://antigravity.google/docs/cli/overview",
+    requirementsUrl: "https://antigravity.google/docs/cli/install",
     requirementsLabel: "Install CLI",
   },
   codex: {

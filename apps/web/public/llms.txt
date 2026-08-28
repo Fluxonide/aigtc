@@ -6,17 +6,17 @@ aigtc is designed for developers and teams that want clean, reviewable commit hi
 
 ## Core links
 
-- [Website](https://github.com/Fluxonide/aigtc/): Product overview, installation options, provider list, configuration summary, and FAQ.
+- [Website](https://aigtc.xyz/): Product overview, installation options, provider list, configuration summary, and FAQ.
 - [GitHub repository](https://github.com/Fluxonide/aigtc): Source code, issues, releases, and contribution workflow.
 - [README](https://github.com/Fluxonide/aigtc/blob/main/README.md): Installation, quick start, CLI reference, examples, provider setup, and configuration details.
 - [npm package](https://www.npmjs.com/package/@aigtc/cli): Published CLI package for global installation.
-- [Configuration schema](https://github.com/Fluxonide/aigtc/schema.json): JSON schema for project-level `.aigtc.json` configuration.
+- [Configuration schema](https://aigtc.xyz/schema.json): JSON schema for project-level `.aigtc.json` configuration.
 
 ## Installation
 
 - [npm package](https://www.npmjs.com/package/@aigtc/cli): Install with `npm install -g @aigtc/cli`. Also works with Bun, pnpm, and Yarn.
-- Homebrew: Install on macOS with `brew install sadiksaifi/tap/aigtc`.
-- [Shell installer](https://github.com/Fluxonide/aigtc/install): Install on macOS or Linux with `curl -fsSL https://github.com/Fluxonide/aigtc/install | bash`.
+- Homebrew: Install on macOS with `brew install Fluxonide/tap/aigtc`.
+- [Shell installer](https://aigtc.xyz/install): Install on macOS or Linux with `curl -fsSL https://aigtc.xyz/install | bash`.
 - [Source repository](https://github.com/Fluxonide/aigtc): Build from source with Bun via `bun install` and `bun run build`.
 
 ## Usage
@@ -35,6 +35,8 @@ aigtc supports both CLI-based and API-based providers.
 
 CLI providers require the corresponding provider binary on `PATH`. API providers require an API key stored through the operating system keychain when available.
 
+Antigravity CLI models are discovered from the signed-in account. Generation runs in an empty workspace with a temporary isolated profile, sandboxing, deny-all permissions and hooks, disabled slash commands, structured output validation, and post-run cleanup. Existing Gemini CLI configurations migrate provider and model together to an account-compatible Antigravity model.
+
 ## Configuration
 
 - Global config lives at `~/.config/aigtc/config.json`.
@@ -52,4 +54,4 @@ CLI providers require the corresponding provider binary on `PATH`. API providers
 ## Optional
 
 - [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): Commit message format followed by aigtc.
-- [Author website](https://sadiksaifi.dev): Project author homepage.
+- [Author website](https://fluxonide.com): Project author homepage.

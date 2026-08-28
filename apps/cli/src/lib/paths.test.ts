@@ -5,7 +5,6 @@ import * as os from "node:os";
 import {
   CONFIG_DIR,
   CACHE_DIR,
-  DATA_DIR,
   CONFIG_FILE,
   UPDATE_CACHE_FILE,
   getModelCacheFile,
@@ -14,7 +13,6 @@ import {
   TEMP_MSG_FILE,
   resolveConfigDir,
   resolveCacheDir,
-  resolveDataDir,
 } from "./paths.ts";
 
 const isWindows = process.platform === "win32";
@@ -39,10 +37,6 @@ describe("paths", () => {
 
       it("CACHE_DIR uses ~/.cache/aigtc on Unix", () => {
         expect(CACHE_DIR).toBe(path.join(os.homedir(), ".cache", "aigtc"));
-      });
-
-      it("DATA_DIR uses ~/.local/share/aigtc on Unix", () => {
-        expect(DATA_DIR).toBe(path.join(os.homedir(), ".local", "share", "aigtc"));
       });
     }
   });
@@ -87,7 +81,6 @@ describe("paths", () => {
     } else {
       const originalXdgConfig = process.env.XDG_CONFIG_HOME;
       const originalXdgCache = process.env.XDG_CACHE_HOME;
-      const originalXdgData = process.env.XDG_DATA_HOME;
 
       afterEach(() => {
         if (originalXdgConfig === undefined) {
@@ -99,11 +92,6 @@ describe("paths", () => {
           delete process.env.XDG_CACHE_HOME;
         } else {
           process.env.XDG_CACHE_HOME = originalXdgCache;
-        }
-        if (originalXdgData === undefined) {
-          delete process.env.XDG_DATA_HOME;
-        } else {
-          process.env.XDG_DATA_HOME = originalXdgData;
         }
       });
 
@@ -126,16 +114,6 @@ describe("paths", () => {
         delete process.env.XDG_CACHE_HOME;
         expect(resolveCacheDir()).toBe(path.join(os.homedir(), ".cache", "aigtc"));
       });
-
-      it("resolveDataDir respects XDG_DATA_HOME", () => {
-        process.env.XDG_DATA_HOME = "/tmp/xdg-data";
-        expect(resolveDataDir()).toBe("/tmp/xdg-data/aigtc");
-      });
-
-      it("resolveDataDir falls back to ~/.local/share when XDG_DATA_HOME is unset", () => {
-        delete process.env.XDG_DATA_HOME;
-        expect(resolveDataDir()).toBe(path.join(os.homedir(), ".local", "share", "aigtc"));
-      });
     }
   });
 
@@ -156,23 +134,23 @@ describe("paths", () => {
     });
 
     describe("getModelsDevCacheFilePath", () => {
-      const originalEnv = process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+      const originalEnv = process.env.AIGTC_MODELS_DEV_CACHE_FILE;
 
       afterEach(() => {
         if (originalEnv === undefined) {
-          delete process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+          delete process.env.AIGTC_MODELS_DEV_CACHE_FILE;
         } else {
-          process.env.AI_GIT_MODELS_DEV_CACHE_FILE = originalEnv;
+          process.env.AIGTC_MODELS_DEV_CACHE_FILE = originalEnv;
         }
       });
 
       it("returns default path when env var is not set", () => {
-        delete process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+        delete process.env.AIGTC_MODELS_DEV_CACHE_FILE;
         expect(getModelsDevCacheFilePath()).toBe(path.join(CACHE_DIR, "models-dev-catalog.json"));
       });
 
-      it("respects AI_GIT_MODELS_DEV_CACHE_FILE override", () => {
-        process.env.AI_GIT_MODELS_DEV_CACHE_FILE = "/tmp/custom-cache.json";
+      it("respects AIGTC_MODELS_DEV_CACHE_FILE override", () => {
+        process.env.AIGTC_MODELS_DEV_CACHE_FILE = "/tmp/custom-cache.json";
         expect(getModelsDevCacheFilePath()).toBe("/tmp/custom-cache.json");
       });
     });

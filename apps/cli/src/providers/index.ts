@@ -33,7 +33,7 @@ export function getAdapter(providerId: string): ProviderAdapter | undefined {
  * Get a CLI adapter by binary name.
  * Only searches CLI mode adapters.
  *
- * @param binary - The binary name (e.g., "gemini", "claude")
+ * @param binary - The binary name (e.g., "agy", "claude")
  * @returns The provider adapter or undefined if not found
  */
 export function getAdapterByBinary(binary: string): ProviderAdapter | undefined {

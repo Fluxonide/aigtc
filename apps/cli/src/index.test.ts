@@ -92,6 +92,18 @@ async function createPathWithoutProviderCLI(): Promise<string> {
   return binDir;
 }
 
+async function createPathWithFakeAntigravity(): Promise<string> {
+  const binDir = await createPathWithoutProviderCLI();
+  const executable = process.platform === "win32" ? "agy.cmd" : "agy";
+  const script =
+    process.platform === "win32"
+      ? `@echo off\r\nif "%1"=="--version" (echo 1.1.13) else (echo {"status":"SUCCESS","command":{"data":{"models":[{"id":"gemini-3.7-flash-low","label":"Gemini 3.7 Flash (Low)"},{"id":"gemini-3.1-pro-low","label":"Gemini 3.1 Pro (Low)"}]}}})\r\n`
+      : `#!/bin/sh\nif [ "$1" = "--version" ]; then\n  echo 1.1.13\nelse\n  echo '{"status":"SUCCESS","command":{"data":{"models":[{"id":"gemini-3.7-flash-low","label":"Gemini 3.7 Flash (Low)"},{"id":"gemini-3.1-pro-low","label":"Gemini 3.1 Pro (Low)"}]}}}'\nfi\n`;
+  const executablePath = path.join(binDir, executable);
+  fs.writeFileSync(executablePath, script, { mode: 0o700 });
+  return binDir;
+}
+
 async function runCLI(args: string[], options: RunCLIOptions): Promise<RunCLIResult> {
   const proc = spawn([process.execPath, "run", CLI_PATH, ...args], {
     cwd: options.cwd,
@@ -102,7 +114,7 @@ async function runCLI(args: string[], options: RunCLIOptions): Promise<RunCLIRes
       HOME: options.homeDir,
       XDG_CONFIG_HOME: path.join(options.homeDir, ".config"),
       XDG_CACHE_HOME: path.join(options.homeDir, ".cache"),
-      AI_GIT_DISABLE_UPDATE_CHECK: "1",
+      AIGTC_DISABLE_UPDATE_CHECK: "1",
       NO_COLOR: "1",
       CI: "1",
       PATH: options.pathEnv ?? process.env.PATH ?? "",
@@ -252,7 +264,7 @@ describe("aigtc CLI", () => {
       homeDir,
       pathEnv: noProviderPath,
       extraEnv: {
-        AI_GIT_MODEL_CATALOG_OVERRIDE: catalogOverrideFile,
+        AIGTC_MODEL_CATALOG_OVERRIDE: catalogOverrideFile,
       },
     });
 
@@ -296,6 +308,179 @@ describe("aigtc CLI", () => {
     expect(backupFile).toBeDefined();
     const backupConfig = JSON.parse(fs.readFileSync(path.join(configDir, backupFile!), "utf8"));
     expect(backupConfig.model).toBe("sonnet");
+  });
+
+  it("migrates a retired Codex config on disk before dry-run", async () => {
+    const homeDir = createTestHome({ provider: "codex", model: "gpt-5.4-mini-xhigh" });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: noProviderPath,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
+
+    const configPath = path.join(homeDir, ".config", "aigtc", "config.json");
+    expect(JSON.parse(fs.readFileSync(configPath, "utf8")).model).toBe("gpt-5.6-luna-xhigh");
+    const backupFile = fs
+      .readdirSync(path.dirname(configPath))
+      .find((file) => file.startsWith("config.json.") && file.endsWith(".bak"));
+    expect(backupFile).toBeDefined();
+  });
+
+  it("migrates an existing Gemini CLI config to Antigravity before dry-run", async () => {
+    const homeDir = createTestHome({
+      provider: "gemini-cli",
+      model: "gemini-3.1-pro-preview",
+    });
+    const providerPath = await createPathWithFakeAntigravity();
+    const repoDir = createGitRepo();
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: providerPath,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
+    const configPath = path.join(homeDir, ".config", "aigtc", "config.json");
+    expect(JSON.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({
+      provider: "antigravity-cli",
+      model: "gemini-3.1-pro-low",
+    });
+    const backupFile = fs
+      .readdirSync(path.dirname(configPath))
+      .find((file) => file.startsWith("config.json.") && file.endsWith(".bak"));
+    expect(backupFile).toBeDefined();
+  });
+
+  it("migrates the effective legacy pair when a project overrides only the model", async () => {
+    const homeDir = createTestHome({
+      provider: "gemini-cli",
+      model: "gemini-3-flash-preview",
+    });
+    const providerPath = await createPathWithFakeAntigravity();
+    const repoDir = createGitRepo();
+    const projectConfigPath = path.join(repoDir, ".aigtc.json");
+    fs.writeFileSync(projectConfigPath, JSON.stringify({ model: "gemini-3.1-pro-preview" }));
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: providerPath,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(fs.readFileSync(projectConfigPath, "utf8"))).toMatchObject({
+      provider: "antigravity-cli",
+      model: "gemini-3.1-pro-low",
+    });
+  });
+
+  it("does not migrate an inactive legacy global config beneath a valid project config", async () => {
+    const homeDir = createTestHome({
+      provider: "gemini-cli",
+      model: "gemini-3-flash-preview",
+    });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+    fs.writeFileSync(
+      path.join(repoDir, ".aigtc.json"),
+      JSON.stringify({ provider: "claude-code", model: "haiku" }),
+    );
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: noProviderPath,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
+    expect(result.stderr).not.toContain("Antigravity CLI is required to migrate");
+  });
+
+  it("does not migrate an inactive legacy config beneath an explicit provider override", async () => {
+    const homeDir = createTestHome({
+      provider: "gemini-cli",
+      model: "gemini-3-flash-preview",
+    });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(
+      ["--provider", "claude-code", "--model", "haiku", "--dry-run", "-A"],
+      { cwd: repoDir, homeDir, pathEnv: noProviderPath },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
+    expect(result.stderr).not.toContain("Antigravity CLI is required to migrate");
+  });
+
+  it("prints actionable guidance when an active legacy migration cannot start", async () => {
+    const homeDir = createTestHome({
+      provider: "gemini-cli",
+      model: "gemini-3-flash-preview",
+    });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: noProviderPath,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Antigravity CLI is required to migrate");
+    expect(result.stderr).toContain("curl -fsSL https://antigravity.google/cli/install.sh | bash");
+  });
+
+  it.each([
+    ["codex", "gpt-5.6-luna-low"],
+    ["claude-code", "haiku"],
+    ["antigravity-cli", "gemini-3.7-flash-low"],
+  ])("runs a dry-run with the %s adapter selection", async (provider, model) => {
+    const homeDir = createTestHome({ provider, model });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+    fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+    const result = await runCLI(["--dry-run", "-A"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: noProviderPath,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
+  });
+
+  it("rejects a retired Codex CLI override with reconfiguration guidance", async () => {
+    const homeDir = createTestHome({ provider: "codex", model: "gpt-5.6-luna-low" });
+    const noProviderPath = await createPathWithoutProviderCLI();
+    const repoDir = createGitRepo();
+
+    const result = await runCLI(["--provider", "codex", "--model", "gpt-5.4-low"], {
+      cwd: repoDir,
+      homeDir,
+      pathEnv: noProviderPath,
+    });
+
+    expect(result.stderr).toContain("Unknown model 'gpt-5.4-low'");
+    expect(result.stderr).toContain("aigtc configure");
+    expect(result.exitCode).toBe(1);
   });
 
   it("should work with effort-based model IDs in dry-run", async () => {
@@ -357,4 +542,36 @@ describe("aigtc CLI", () => {
       expect(result.exitCode).toBe(1);
     },
   );
+});
+
+it("persists and backs up an effective legacy project configuration", async () => {
+  const homeDir = createTestHome();
+  const providerPath = await createPathWithFakeAntigravity();
+  const repoDir = createGitRepo();
+  const projectConfigPath = path.join(repoDir, ".aigtc.json");
+  fs.writeFileSync(
+    projectConfigPath,
+    JSON.stringify({ provider: "gemini-cli", model: "gemini-3.1-pro-preview" }),
+  );
+  fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
+
+  const result = await runCLI(["--dry-run", "-A"], {
+    cwd: repoDir,
+    homeDir,
+    pathEnv: providerPath,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(JSON.parse(fs.readFileSync(projectConfigPath, "utf8"))).toMatchObject({
+    provider: "antigravity-cli",
+    model: "gemini-3.1-pro-low",
+  });
+  const backupFile = fs
+    .readdirSync(repoDir)
+    .find((file) => file.startsWith(".aigtc.json.") && file.endsWith(".bak"));
+  expect(backupFile).toBeDefined();
+  expect(JSON.parse(fs.readFileSync(path.join(repoDir, backupFile!), "utf8"))).toEqual({
+    provider: "gemini-cli",
+    model: "gemini-3.1-pro-preview",
+  });
 });

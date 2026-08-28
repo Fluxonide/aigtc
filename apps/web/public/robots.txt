@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://github.com/Fluxonide/aigtc/sitemap-index.xml
+Sitemap: https://aigtc.xyz/sitemap-index.xml

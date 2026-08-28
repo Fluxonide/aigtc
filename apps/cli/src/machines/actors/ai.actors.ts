@@ -15,6 +15,29 @@ type InvokeAIInput = {
   adapter?: ProviderAdapter;
 };
 
+type SpinnerController = Pick<ReturnType<typeof spinner>, "start" | "message" | "stop" | "error">;
+
+type InvokeAIActorOptions = {
+  shouldUseInteractiveSpinner?: () => boolean;
+  spinnerFactory?: () => SpinnerController;
+};
+
+const noopSpinner: SpinnerController = {
+  start: () => {},
+  message: () => {},
+  stop: () => {},
+  error: () => {},
+};
+
+export function shouldUseInteractiveSpinner(): boolean {
+  return (
+    Boolean(process.stdout.isTTY) &&
+    Boolean(process.stderr.isTTY) &&
+    !process.env.CI &&
+    process.env.TERM !== "dumb"
+  );
+}
+
 // ── Factory ──────────────────────────────────────────────────────────
 
 /**
@@ -26,6 +49,7 @@ type InvokeAIInput = {
  */
 export function createInvokeAIActor(
   resolver?: (input: { model: string; system: string; prompt: string }) => Promise<string>,
+  options: InvokeAIActorOptions = {},
 ) {
   return fromPromise(async ({ input }: { input: InvokeAIInput }) => {
     const invoke =
@@ -35,14 +59,15 @@ export function createInvokeAIActor(
         return input.adapter.invoke(opts);
       });
 
-    const s = spinner();
-    s.start(`Analyzing changes with ${input.modelName}...`);
+    const useInteractiveSpinner =
+      options.shouldUseInteractiveSpinner ?? shouldUseInteractiveSpinner;
+    const createSpinner = options.spinnerFactory ?? spinner;
+    const s = useInteractiveSpinner() ? createSpinner() : noopSpinner;
+    s.start(`Generating with ${input.modelName}`);
 
     const cancelSlowWarning = createSlowWarningTimer(input.slowThresholdMs, () => {
       s.message(
-        pc.yellow(
-          `Still generating with ${input.modelName}... Speed depends on your selected provider and model.`,
-        ),
+        pc.yellow(`Still generating with ${input.modelName}, speed varies by provider/model`),
       );
     });
 
@@ -57,7 +82,7 @@ export function createInvokeAIActor(
       return rawMsg;
     } catch (e) {
       cancelSlowWarning();
-      s.stop("Generation failed");
+      s.error("Generation failed");
       throw e;
     }
   });

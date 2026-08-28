@@ -1,5 +1,5 @@
 import type { CLIProviderAdapter } from "../types.ts";
-import { antigravityCliAdapter } from "./antigravity-cli.ts";
+import { antigravityAdapter } from "./antigravity.ts";
 import { claudeCodeAdapter } from "./claude-code.ts";
 import { codexAdapter } from "./codex.ts";
 import { opencodeAdapter } from "./opencode.ts";
@@ -14,9 +14,9 @@ import { piAdapter } from "./pi.ts";
  * Add new CLI adapters here when adding support for new CLI tools.
  */
 const cliAdapters: Map<string, CLIProviderAdapter> = new Map([
+  [antigravityAdapter.providerId, antigravityAdapter],
   [claudeCodeAdapter.providerId, claudeCodeAdapter],
   [codexAdapter.providerId, codexAdapter],
-  [antigravityCliAdapter.providerId, antigravityCliAdapter],
   [opencodeAdapter.providerId, opencodeAdapter],
   [piAdapter.providerId, piAdapter],
 ]);
@@ -52,7 +52,7 @@ export function getCLIProviderIds(): string[] {
 }
 
 // Re-export adapters for direct access if needed
-export { antigravityCliAdapter } from "./antigravity-cli.ts";
+export { antigravityAdapter } from "./antigravity.ts";
 export { claudeCodeAdapter } from "./claude-code.ts";
 export { codexAdapter } from "./codex.ts";
 export { opencodeAdapter } from "./opencode.ts";

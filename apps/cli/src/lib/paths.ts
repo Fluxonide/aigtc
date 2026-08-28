@@ -36,24 +36,6 @@ export function resolveCacheDir(): string {
 }
 
 /**
- * Compute the data directory at call time (testable via env manipulation).
- * For application data files (e.g. managed settings for child CLIs).
- */
-export function resolveDataDir(): string {
-  if (isWindows) {
-    // Extra "data" subdirectory avoids collision with CACHE_DIR,
-    // which shares the same LOCALAPPDATA\aigtc parent on Windows.
-    return path.join(
-      process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
-      "aigtc",
-      "data",
-    );
-  }
-  const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
-  return path.join(xdgData, "aigtc");
-}
-
-/**
  * Compute the state directory at call time (testable via env manipulation).
  * For persistent application state that isn't config or cache.
  */
@@ -70,10 +52,29 @@ export function resolveStateDir(): string {
   return path.join(xdgState, "aigtc");
 }
 
+/**
+ * Resolve the application data directory.
+ * - Linux/macOS: ~/.local/share/aigtc
+ * - Windows: %LOCALAPPDATA%\aigtc\data
+ */
+export function resolveDataDir(): string {
+  if (isWindows) {
+    return path.join(
+      process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
+      "aigtc",
+      "data",
+    );
+  }
+  return path.join(
+    process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share"),
+    "aigtc",
+  );
+}
+
 export const CONFIG_DIR = resolveConfigDir();
 export const CACHE_DIR = resolveCacheDir();
-export const DATA_DIR = resolveDataDir();
 export const STATE_DIR = resolveStateDir();
+export const DATA_DIR = resolveDataDir();
 
 // ── State Files ─────────────────────────────────────────────────────
 
@@ -92,7 +93,7 @@ export function getModelCacheFile(provider: string): string {
 }
 
 export function getModelsDevCacheFilePath(): string {
-  const override = process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+  const override = process.env.AIGTC_MODELS_DEV_CACHE_FILE;
   if (override) return override;
   return path.join(CACHE_DIR, "models-dev-catalog.json");
 }

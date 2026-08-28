@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "$id": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "title": "AIGTC Configuration",
   "description": "Configuration schema for AIGTC CLI tool",
   "type": "object",

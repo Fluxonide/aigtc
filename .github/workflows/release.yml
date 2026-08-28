@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -21,11 +21,13 @@ jobs:
         run: git fetch --force --tags origin '+refs/heads/*:refs/remotes/origin/*'
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-
+      - name: Validate release tag
+        id: tagsmith
+        run: bunx tagsmith@latest validate --tag "$GITHUB_REF_NAME" --github-output
 
       - name: Install dependencies
         run: bun install
@@ -97,7 +99,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: ${{ steps.changelog.outputs.content }}
           generate_release_notes: false
@@ -112,6 +114,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout Homebrew Tap
+        uses: actions/checkout@v7
+        with:
+          repository: Fluxonide/homebrew-tap
+          token: ${{ secrets.TAP_PAT }}
+          path: homebrew-tap
+
+      - name: Update Homebrew Formula
+        run: |
+          VERSION="${{ github.ref_name }}"
+
+          URL_ARM64="https://github.com/${{ github.repository }}/releases/download/${VERSION}/aigtc-darwin-arm64.tar.gz"
+          SHA256_ARM64=$(shasum -a 256 apps/cli/dist/aigtc-darwin-arm64.tar.gz | awk '{print $1}')
+
+          URL_X64="https://github.com/${{ github.repository }}/releases/download/${VERSION}/aigtc-darwin-x64.tar.gz"
+          SHA256_X64=$(shasum -a 256 apps/cli/dist/aigtc-darwin-x64.tar.gz | awk '{print $1}')
+
+          echo "Updating Formula for version $VERSION..."
+
+          cd homebrew-tap/Formula
+
+          # Update Version
+          sed -i "s|version \".*\"|version \"${VERSION#v}\"|" aigtc.rb
+
+          # Update ARM64 (range: if arm? ... else)
+          sed -i "/if Hardware::CPU.arm?/,/else/s|url \".*\"|url \"${URL_ARM64}\"|" aigtc.rb
+          sed -i "/if Hardware::CPU.arm?/,/else/s|sha256 \".*\"|sha256 \"${SHA256_ARM64}\"|" aigtc.rb
+
+          # Update X64 (range: else ... end)
+          sed -i "/else/,/end/s|url \".*\"|url \"${URL_X64}\"|" aigtc.rb
+          sed -i "/else/,/end/s|sha256 \".*\"|sha256 \"${SHA256_X64}\"|" aigtc.rb
+
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add aigtc.rb
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "release: aigtc version ${VERSION}" -m "Release: https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
+            git push origin main
+          fi
 
   publish-npm:
     needs: release
@@ -122,12 +166,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install latest npm
@@ -185,9 +229,31 @@ jobs:
             fi
           done
 
+      - name: Validate all packages (dry-run)
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          for pkg in darwin-arm64 darwin-x64 linux-arm64 linux-x64 win32-arm64 win32-x64; do
+            echo "Validating @aigtc/${pkg}..."
+            if npm view "@aigtc/${pkg}@${VERSION}" version >/dev/null 2>&1; then
+              echo "@aigtc/${pkg}@${VERSION} already published; skipping dry-run validation."
+              continue
+            fi
+            cd "packages/npm/${pkg}"
+            npm publish --provenance --access public --dry-run
+            cd "${{ github.workspace }}"
+          done
+
+          echo "Validating @aigtc/cli..."
+          if npm view "@aigtc/cli@${VERSION}" version >/dev/null 2>&1; then
+            echo "@aigtc/cli@${VERSION} already published; skipping dry-run validation."
+            exit 0
+          fi
+          cd packages/npm/aigtc
+          npm publish --provenance --access public --dry-run
+
       - name: Publish platform packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
@@ -203,25 +269,8 @@ jobs:
             cd "${{ github.workspace }}"
           done
 
-      - name: Validate main package (dry-run)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-
-          echo "Validating @aigtc/cli..."
-          if npm view "@aigtc/cli@${VERSION}" version >/dev/null 2>&1; then
-            echo "@aigtc/cli@${VERSION} already published; skipping dry-run validation."
-            exit 0
-          fi
-          cd packages/npm/ai-git
-          npm publish --provenance --access public --dry-run
-
       - name: Publish main package (@aigtc/cli)
-        working-directory: packages/npm/ai-git
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/npm/aigtc
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"

@@ -25,7 +25,7 @@ npm install -g @aigtc/cli
 ### Homebrew (macOS)
 
 ```bash
-brew tap sadiksaifi/tap/aigtc
+brew tap Fluxonide/tap/aigtc
 ```
 
 ### Shell Script (macOS/Linux)
@@ -151,7 +151,7 @@ AIGTC uses a **three-tier configuration system**:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "claude-code",
   "model": "haiku",
   "defaults": {
@@ -164,7 +164,7 @@ AIGTC uses a **three-tier configuration system**:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "openrouter",
   "model": "anthropic/claude-sonnet-4-6"
 }
@@ -190,7 +190,7 @@ The default prompt works excellently for most projects. Customize only for proje
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/aigtc/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "claude-code",
   "model": "sonnet",
   "prompt": {
@@ -228,7 +228,7 @@ bun run dev
 bun run dev --dry-run -A
 
 # Disable update-check network calls (useful for tests/CI)
-AI_GIT_DISABLE_UPDATE_CHECK=1 bun test
+AIGTC_DISABLE_UPDATE_CHECK=1 bun test
 
 # Type check
 bun run typecheck

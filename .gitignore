@@ -50,8 +50,8 @@ scope-rename-lower.js
 # Ignore compiled binaries in platform packages
 packages/npm/*/bin/aigtc
 packages/npm/*/bin/aigtc.exe
-packages/npm/*/bin/ai-git
-packages/npm/*/bin/ai-git.exe
-!packages/npm/ai-git/bin/aigtc
+packages/npm/*/bin/aigtc
+packages/npm/*/bin/aigtc.exe
+!packages/npm/aigtc/bin/aigtc
 
 reset-author.js

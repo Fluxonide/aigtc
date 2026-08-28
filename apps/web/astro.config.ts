@@ -3,7 +3,7 @@ import { defineConfig, fontProviders } from "astro/config";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://github.com/Fluxonide/aigtc",
+  site: "https://aigtc.xyz",
   output: "static",
   trailingSlash: "never",
   build: {

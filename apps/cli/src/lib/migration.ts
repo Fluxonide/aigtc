@@ -1,6 +1,8 @@
 import { log } from "@clack/prompts";
 import pc from "picocolors";
 import type { UserConfig } from "../config.ts";
+import { selectAntigravityMigrationModel } from "../providers/cli/antigravity.ts";
+import type { APIModelDefinition } from "../providers/types.ts";
 
 // ─── MIGRATION REGISTRY ──────────────────────────────────────────────
 
@@ -87,22 +89,40 @@ export const migrations: ConfigMigration[] = [
     },
   },
   {
-    id: "gemini-cli-to-antigravity",
-    description: "Migrate 'gemini-cli' provider to 'antigravity-cli'",
+    id: "codex-current-model-families",
+    description: "Migrate retired Codex model IDs to supported model families",
     migrate(config) {
-      if (config.provider === "gemini-cli") {
-        config.provider = "antigravity-cli";
-        const changes: string[] = ["Migrated provider 'gemini-cli' → 'antigravity-cli'"];
-        if (
-          typeof config.model === "string" &&
-          (config.model.includes("gemini-3-flash") || config.model.includes("preview"))
-        ) {
-          const oldModel = config.model;
-          config.model = "gemini-3.7-flash-medium";
-          changes.push(`Migrated model '${oldModel}' → 'gemini-3.7-flash-medium'`);
-        }
-        return changes.join(", ");
+      if (config.provider !== "codex" || typeof config.model !== "string") {
+        return null;
       }
+
+      const FAMILY_MAP = [
+        ["gpt-5.1-codex-max", "gpt-5.6-sol"],
+        ["gpt-5.1-codex-mini", "gpt-5.6-terra"],
+        ["gpt-5.3-codex", "gpt-5.6-sol"],
+        ["gpt-5.2-codex", "gpt-5.6-sol"],
+        ["gpt-5.1-codex", "gpt-5.6-sol"],
+        ["gpt-5.4-mini", "gpt-5.6-luna"],
+        ["gpt-5.4", "gpt-5.6-terra"],
+        ["gpt-5.2", "gpt-5.6-terra"],
+      ] as const;
+      const EFFORTS = new Set(["low", "medium", "high", "xhigh"]);
+
+      for (const [legacyFamily, currentFamily] of FAMILY_MAP) {
+        const effort =
+          config.model === legacyFamily
+            ? "low"
+            : config.model.startsWith(`${legacyFamily}-`)
+              ? config.model.slice(legacyFamily.length + 1)
+              : null;
+
+        if (!effort || !EFFORTS.has(effort)) continue;
+
+        const old = config.model;
+        config.model = `${currentFamily}-${effort}`;
+        return `Migrated retired Codex model '${old}' → '${config.model}'`;
+      }
+
       return null;
     },
   },
@@ -138,6 +158,31 @@ export function migrateConfig(raw: Record<string, unknown>): MigrationResult {
     if (change !== null) changes.push(change);
   }
   return { config: config as UserConfig, changed: changes.length > 0, changes };
+}
+
+export async function migrateLegacyGeminiCliConfig(
+  config: UserConfig,
+  loadModels: () => Promise<APIModelDefinition[]>,
+): Promise<MigrationResult> {
+  if (config.provider !== "gemini-cli" || typeof config.model !== "string") {
+    return { config, changed: false, changes: [] };
+  }
+
+  const models = await loadModels();
+  const migratedModel = selectAntigravityMigrationModel(config.model, models);
+  if (!migratedModel) {
+    throw new Error(
+      `Cannot migrate unsupported Gemini CLI model '${config.model}'. Run \`aigtc configure\` to select an Antigravity model.`,
+    );
+  }
+
+  return {
+    config: { ...config, provider: "antigravity-cli", model: migratedModel },
+    changed: true,
+    changes: [
+      `Migrated provider 'gemini-cli' → 'antigravity-cli' and model '${config.model}' → '${migratedModel}'`,
+    ],
+  };
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────────

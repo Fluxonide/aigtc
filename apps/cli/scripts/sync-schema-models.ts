@@ -5,8 +5,12 @@ import {
   PROVIDER_MODEL_RULES,
   matchesProviderRules,
 } from "../src/providers/api/models/provider-rules.ts";
+import { PROVIDERS } from "../src/providers/registry.ts";
 
 const MODELS_DEV_API_URL = "https://models.dev/api.json";
+const DYNAMIC_CLI_EXAMPLES: Record<string, string> = {
+  "antigravity-cli": "gemini-3.7-flash-low",
+};
 
 type ModelsDevStatus = "alpha" | "beta" | "deprecated";
 
@@ -132,35 +136,62 @@ function updateProviderDescription(
   if (providerId === "openai") providerLabel = "OpenAI";
   if (providerId === "google-ai-studio") providerLabel = "Google AI Studio";
   if (providerId === "anthropic") providerLabel = "Anthropic API";
+  if (providerId === "antigravity-cli") providerLabel = "Antigravity CLI";
 
   modelSchema.description = `${providerLabel} model ID (e.g., '${example}'). Models are fetched dynamically.`;
 
   (match.then as any).properties.model = modelSchema;
 }
 
-async function main(): Promise<void> {
-  const payload = await fetchModelsDev();
+function updateStaticCLIModels(schema: Record<string, unknown>): void {
+  const allOf = schema.allOf as Array<Record<string, unknown>>;
+  const descriptions: Record<string, string> = {
+    "claude-code":
+      "Claude Code virtual model ID. Fable, Sonnet, and Opus support low, medium, high, xhigh, and max. Haiku has no effort level and is recommended for this latency-sensitive workload.",
+    codex:
+      "Codex CLI virtual model ID: '<base-model>-<effort>'. Supported effort levels depend on the model and include low, medium, high, xhigh, and max. Default: 'gpt-5.6-luna-low'. Ultra is not a model effort and is not supported.",
+  };
 
+  for (const provider of PROVIDERS.filter(
+    (entry) => entry.mode === "cli" && !entry.dynamicModels,
+  )) {
+    const match = allOf.find(
+      (entry) => (entry.if as any)?.properties?.provider?.const === provider.id,
+    );
+    if (!match) continue;
+
+    const modelSchema = ((match.then as any)?.properties?.model ?? {}) as Record<string, unknown>;
+    modelSchema.enum = provider.models.map((model) => model.id);
+    modelSchema.description = descriptions[provider.id];
+    (match.then as any).properties.model = modelSchema;
+  }
+}
+
+export function updateSchemaModels(
+  current: Record<string, any>,
+  payload: ModelsDevPayload,
+): {
+  openRouterExample: string;
+  openAIExample: string;
+  googleExample: string;
+  anthropicExample: string;
+} {
   const openAIExample = pickProviderExample("openai", payload);
   const googleExample = pickProviderExample("google", payload);
   const anthropicExample = pickProviderExample("anthropic", payload);
   const openRouterExample = `openai/${openAIExample}`;
 
-  const schemaPath = path.resolve(import.meta.dir, "../../../schema.json");
-  const current = JSON.parse(await readFile(schemaPath, "utf8")) as Record<string, any>;
-
-  const staticCliExamples = [
-    "haiku",
-    "sonnet-low",
-    "opus-low",
-    "gemini-3-flash-preview",
-    "gpt-5.3-codex",
-    "gpt-5.2-codex",
-    "gpt-5.1-codex-max",
-  ];
+  const staticCliExamples = PROVIDERS.filter(
+    (provider) => provider.mode === "cli" && !provider.dynamicModels,
+  ).flatMap((provider) =>
+    provider.models.filter((model) => model.isRecommended).map((model) => model.id),
+  );
 
   current.properties.model.examples = unique([
     ...staticCliExamples,
+    ...Object.values(DYNAMIC_CLI_EXAMPLES),
+    "opencode/gpt-5-nano#minimal",
+    "openai-codex/gpt-5.6-luna#low",
     openRouterExample,
     openAIExample,
     googleExample,
@@ -171,14 +202,28 @@ async function main(): Promise<void> {
   updateProviderDescription(current, "openai", openAIExample);
   updateProviderDescription(current, "google-ai-studio", googleExample);
   updateProviderDescription(current, "anthropic", anthropicExample);
+  for (const [providerId, example] of Object.entries(DYNAMIC_CLI_EXAMPLES)) {
+    updateProviderDescription(current, providerId, example);
+  }
+  updateStaticCLIModels(current);
+
+  return { openRouterExample, openAIExample, googleExample, anthropicExample };
+}
+
+async function main(): Promise<void> {
+  const payload = await fetchModelsDev();
+  const schemaPath = path.resolve(import.meta.dir, "../../../schema.json");
+  const current = JSON.parse(await readFile(schemaPath, "utf8")) as Record<string, any>;
+
+  const examples = updateSchemaModels(current, payload);
 
   await writeFile(schemaPath, JSON.stringify(current, null, 2) + "\n", "utf8");
 
   console.log(`Updated ${schemaPath}`);
-  console.log(`openrouter example: ${openRouterExample}`);
-  console.log(`openai example: ${openAIExample}`);
-  console.log(`google example: ${googleExample}`);
-  console.log(`anthropic example: ${anthropicExample}`);
+  console.log(`openrouter example: ${examples.openRouterExample}`);
+  console.log(`openai example: ${examples.openAIExample}`);
+  console.log(`google example: ${examples.googleExample}`);
+  console.log(`anthropic example: ${examples.anthropicExample}`);
 }
 
-await main();
+if (import.meta.main) await main();

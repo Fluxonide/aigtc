@@ -16,18 +16,26 @@ import {
   type OnboardingActorResult,
 } from "./cli.machine.ts";
 import { stagingMachine } from "./staging.machine.ts";
-import type { ResolvedConfig } from "../config.ts";
+import type { ResolvedConfig, UserConfig } from "../config.ts";
 import {
+  CONFIG_FILE,
   loadUserConfig,
   loadProjectConfig,
   isConfigComplete,
+  queueMigrationNotice,
   resolveConfigAsync,
+  saveProjectConfig,
+  saveUserConfig,
+  getProjectConfigPath,
   getProviderById,
   getModelById,
   flushMigrationNotice,
 } from "../config.ts";
+import { backupConfigFile, migrateLegacyGeminiCliConfig } from "../lib/migration.ts";
 import { PROVIDERS } from "../providers/registry.ts";
 import { getAdapter } from "../providers/index.ts";
+import { antigravityAdapter } from "../providers/cli/antigravity.ts";
+import { extractErrorMessage } from "../lib/errors.ts";
 import {
   checkGitInstalled,
   checkInsideRepo,
@@ -65,11 +73,15 @@ import type { SupportedAPIProviderId } from "../providers/api/models/types.ts";
 async function resolveFullConfig(
   options: { provider?: string; model?: string },
   _version: string, // kept for future use (e.g. version-specific model validation)
+  loaded?: { userConfig?: UserConfig; projectConfig?: UserConfig },
 ): Promise<ConfigResolutionResult> {
-  const resolvedConfig = await resolveConfigAsync({
-    provider: options.provider,
-    model: options.model,
-  });
+  const resolvedConfig = await resolveConfigAsync(
+    {
+      provider: options.provider,
+      model: options.model,
+    },
+    loaded,
+  );
 
   // Validate provider (Bug #2 fix: use dynamic PROVIDERS list)
   const providerDef = getProviderById(resolvedConfig.provider);
@@ -119,6 +131,7 @@ async function resolveFullConfig(
         pc.red(`Error: Unknown model '${modelId}' for provider '${providerDef.name}'.`),
       );
       console.error(pc.dim(`Available models: ${providerDef.models.map((m) => m.id).join(", ")}`));
+      console.error(pc.dim("Run `aigtc configure` to select a supported model."));
       throw new Error(`Unknown model '${modelId}' for provider '${providerDef.name}'`);
     }
     model = modelDef.id;
@@ -132,6 +145,79 @@ async function resolveFullConfig(
     model,
     modelName,
     needsSetup: false,
+  };
+}
+
+async function migrateLoadedLegacyConfigs(
+  userConfig: UserConfig | undefined,
+  projectConfig: UserConfig | undefined,
+  overrides: { provider?: string; model?: string },
+): Promise<{ userConfig?: UserConfig; projectConfig?: UserConfig }> {
+  const hasCompleteOverride = Boolean(overrides.provider && overrides.model);
+  const effectiveProvider = projectConfig?.provider ?? userConfig?.provider;
+  const effectiveModel = projectConfig?.model ?? userConfig?.model;
+  const projectDefinesProviderOrModel = Boolean(
+    projectConfig?.provider !== undefined || projectConfig?.model !== undefined,
+  );
+  const hasEffectiveLegacyConfig =
+    !hasCompleteOverride &&
+    effectiveProvider === "gemini-cli" &&
+    typeof effectiveModel === "string";
+  const migrateProject = hasEffectiveLegacyConfig && projectDefinesProviderOrModel;
+  const migrateUser = hasEffectiveLegacyConfig && !migrateProject;
+  const hasLegacyConfig = migrateUser || migrateProject;
+  if (!hasLegacyConfig) return { userConfig, projectConfig };
+
+  if (!(await antigravityAdapter.checkAvailable())) {
+    throw new Error(
+      "Antigravity CLI is required to migrate the existing configuration. Install it with: curl -fsSL https://antigravity.google/cli/install.sh | bash",
+    );
+  }
+
+  const models = await antigravityAdapter.fetchModels!();
+  const migrate = (config: UserConfig | undefined) =>
+    config
+      ? migrateLegacyGeminiCliConfig(
+          { ...config, provider: effectiveProvider, model: effectiveModel },
+          async () => models,
+        )
+      : Promise.resolve({ config: undefined, changed: false, changes: [] });
+  const [userResult, projectResult] = await Promise.all([
+    migrateUser
+      ? migrate(userConfig)
+      : Promise.resolve({ config: userConfig, changed: false, changes: [] }),
+    migrateProject
+      ? migrate(projectConfig)
+      : Promise.resolve({ config: projectConfig, changed: false, changes: [] }),
+  ]);
+
+  let backupPath: string | undefined;
+  if (userResult.changed && userResult.config) {
+    try {
+      backupPath = await backupConfigFile(CONFIG_FILE);
+    } catch {
+      // Best effort. Migration remains atomic because provider and model save together below.
+    }
+    await saveUserConfig(userResult.config);
+  }
+  if (projectResult.changed && projectResult.config) {
+    const projectConfigPath = await getProjectConfigPath();
+    try {
+      backupPath = await backupConfigFile(projectConfigPath);
+    } catch {
+      // Best effort. Migration remains atomic because provider and model save together below.
+    }
+    await saveProjectConfig(projectResult.config);
+  }
+
+  const changes = [...userResult.changes, ...projectResult.changes];
+  if (changes.length > 0) {
+    queueMigrationNotice({ changes, backupPath });
+  }
+
+  return {
+    userConfig: userResult.config,
+    projectConfig: projectResult.config,
   };
 }
 
@@ -149,7 +235,7 @@ export const wiredCliMachine = cliMachine.provide({
 
         // Start non-blocking update check
         const updateCheckPromise =
-          process.env.AI_GIT_DISABLE_UPDATE_CHECK === "1"
+          process.env.AIGTC_DISABLE_UPDATE_CHECK === "1"
             ? Promise.resolve({
                 updateAvailable: false,
                 latestVersion: null,
@@ -157,11 +243,23 @@ export const wiredCliMachine = cliMachine.provide({
               })
             : startUpdateCheck(options.version);
 
-        const existingConfig = await loadUserConfig();
-        const existingProjectConfig = await loadProjectConfig();
+        let loaded: { userConfig?: UserConfig; projectConfig?: UserConfig };
+        try {
+          loaded = await migrateLoadedLegacyConfigs(
+            await loadUserConfig(),
+            await loadProjectConfig(),
+            options.options,
+          );
+        } catch (error) {
+          console.error(pc.red(`Error: ${extractErrorMessage(error)}`));
+          throw error;
+        }
+        const existingConfig = loaded.userConfig;
+        const existingProjectConfig = loaded.projectConfig;
 
         const isGlobalComplete = isConfigComplete(existingConfig);
         const isProjectComplete = isConfigComplete(existingProjectConfig);
+        const hasCompleteOverride = Boolean(options.options.provider && options.options.model);
 
         // Show update notification early
         const updateResult = await updateCheckPromise;
@@ -170,7 +268,7 @@ export const wiredCliMachine = cliMachine.provide({
         // Neither config is complete. Two scenarios:
         // 1. Config has provider+model but they're invalid → hard error with guidance
         // 2. Config is truly missing or empty → return needsSetup to trigger onboarding
-        if (!isGlobalComplete && !isProjectComplete) {
+        if (!isGlobalComplete && !isProjectComplete && !hasCompleteOverride) {
           const bestConfig = existingProjectConfig ?? existingConfig;
           if (bestConfig?.provider && bestConfig?.model) {
             // Scenario 1: User has a config file with values that don't match any
@@ -214,6 +312,7 @@ export const wiredCliMachine = cliMachine.provide({
             model: options.options.model,
           },
           options.version,
+          loaded,
         );
         return result;
       },
@@ -343,7 +442,7 @@ export const wiredCliMachine = cliMachine.provide({
             await push();
             s.stop("Pushed successfully");
           } catch (error) {
-            s.stop("Push failed", 1);
+            s.error("Push failed");
             throw error;
           }
         }),
@@ -354,7 +453,7 @@ export const wiredCliMachine = cliMachine.provide({
             await addRemoteAndPush(input.url);
             s.stop("Remote added and pushed successfully");
           } catch (error) {
-            s.stop("Failed to push to new remote", 1);
+            s.error("Failed to push to new remote");
             throw error;
           }
         }),
@@ -365,7 +464,7 @@ export const wiredCliMachine = cliMachine.provide({
             await fetchRemote();
             s.stop("Checked remote");
           } catch (error) {
-            s.stop("Could not reach remote", 1);
+            s.error("Could not reach remote");
             throw error;
           }
         }),
@@ -379,7 +478,7 @@ export const wiredCliMachine = cliMachine.provide({
             await pullRebase();
             s.stop("Rebased successfully");
           } catch (error) {
-            s.stop("Rebase failed", 1);
+            s.error("Rebase failed");
             throw error;
           }
         }),

@@ -15,7 +15,7 @@ import type {
 export const seo = {
   site: {
     name: "aigtc",
-    url: "https://github.com/Fluxonide/aigtc",
+    url: "https://aigtc.xyz",
     locale: "en_US",
     themeColor: "#0a0a0a",
   },
@@ -42,8 +42,8 @@ export const seo = {
   },
   twitter: {
     card: "summary_large_image" as const,
-    site: "@thesadiksaifi",
-    creator: "@thesadiksaifi",
+    site: "@Fluxonide",
+    creator: "@Fluxonide",
     image: {
       url: "/twitter.png",
       width: 1200,
@@ -76,12 +76,8 @@ export const hero: HeroContent = {
 
 export const installTabs: readonly InstallTab[] = [
   { id: "npm", label: "npm", command: "npm install -g @aigtc/cli" },
-  { id: "brew", label: "brew", command: "brew install sadiksaifi/tap/aigtc" },
-  {
-    id: "curl",
-    label: "curl",
-    command: "curl -fsSL https://github.com/Fluxonide/aigtc/install | bash",
-  },
+  { id: "brew", label: "brew", command: "brew install Fluxonide/tap/aigtc" },
+  { id: "curl", label: "curl", command: "curl -fsSL https://aigtc.xyz/install | bash" },
   {
     id: "source",
     label: "source",
@@ -139,11 +135,11 @@ export const nav: readonly NavLink[] = [
 // ------------------------------------------------------------------------------
 
 export const footer = {
-  copyright: `© ${new Date().getFullYear()} Sadik Saifi`,
+  copyright: `© ${new Date().getFullYear()} Fluxonide`,
   license: { label: "MIT", href: "https://github.com/Fluxonide/aigtc/blob/main/LICENSE" },
-  author: { label: "sadiksaifi.dev", href: "https://sadiksaifi.dev" },
+  author: { label: "fluxonide.com", href: "https://fluxonide.com" },
   social: [
     { label: "GitHub", href: "https://github.com/Fluxonide/aigtc", icon: "github" },
-    { label: "Twitter", href: "https://x.com/thesadiksaifi", icon: "x" },
+    { label: "Twitter", href: "https://x.com/Fluxonide", icon: "x" },
   ] as readonly SocialLink[],
 } as const;

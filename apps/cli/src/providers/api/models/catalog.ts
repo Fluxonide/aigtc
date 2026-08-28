@@ -66,7 +66,7 @@ export function createSnapshotModelCatalog(): ModelCatalog {
 }
 
 async function loadCatalogFromOverride(): Promise<ModelCatalog | null> {
-  const overrideFile = process.env.AI_GIT_MODEL_CATALOG_OVERRIDE;
+  const overrideFile = process.env.AIGTC_MODEL_CATALOG_OVERRIDE;
   if (!overrideFile) return null;
 
   try {
@@ -172,12 +172,8 @@ function resolveCatalogProvider(
     return { provider: "google", modelId: model.id };
   }
 
-  if (providerId === "cerebras") {
-    return null; // Cerebras models are not in the models.dev catalog
-  }
-
-  if (providerId === "kiro") {
-    return null; // Kiro models are not in the models.dev catalog
+  if (providerId === "cerebras" || providerId === "kiro") {
+    return null; // Cerebras and Kiro models are not in the models.dev catalog
   }
 
   return {

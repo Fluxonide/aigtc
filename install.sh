@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# AIGTC installer — https://github.com/Fluxonide/aigtc
+# AIGTC installer — https://aigtc.xyz
 #
 # Usage:
-#   curl -fsSL https://github.com/Fluxonide/aigtc/install | bash
-#   curl -fsSL https://github.com/Fluxonide/aigtc/install | bash -s -- --version v2.5.0
-#   curl -fsSL https://github.com/Fluxonide/aigtc/install | bash -s -- --no-modify-path
+#   curl -fsSL https://aigtc.xyz/install | bash
+#   curl -fsSL https://aigtc.xyz/install | bash -s -- --version v2.5.0
+#   curl -fsSL https://aigtc.xyz/install | bash -s -- --no-modify-path
 set -euo pipefail
 
 # ==============================================================================
 # Configuration
 # ==============================================================================
 
-REPO="sadiksaifi/aigtc"
-INSTALL_DIR="${AI_GIT_INSTALL_DIR:-$HOME/.local/bin}"
+REPO="Fluxonide/aigtc"
+INSTALL_DIR="${AIGTC_INSTALL_DIR:-$HOME/.local/bin}"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/aigtc"
 VERSION=""
 MODIFY_PATH=true

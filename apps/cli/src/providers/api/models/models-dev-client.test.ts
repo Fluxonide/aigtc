@@ -7,7 +7,7 @@ import { getModelsDevCacheFilePath } from "../../../lib/paths.ts";
 import { createCatalogFromRaw } from "./models-dev-client.ts";
 
 const originalFetch = globalThis.fetch;
-const originalCacheFile = process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+const originalCacheFile = process.env.AIGTC_MODELS_DEV_CACHE_FILE;
 
 const tempDirs: string[] = [];
 
@@ -15,7 +15,7 @@ function createTempCacheFile(): string {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "aigtc-model-catalog-cache-"));
   tempDirs.push(tempDir);
   const cacheFile = path.join(tempDir, "models-dev-catalog.json");
-  process.env.AI_GIT_MODELS_DEV_CACHE_FILE = cacheFile;
+  process.env.AIGTC_MODELS_DEV_CACHE_FILE = cacheFile;
   return cacheFile;
 }
 
@@ -66,9 +66,9 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 
   if (originalCacheFile === undefined) {
-    delete process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
+    delete process.env.AIGTC_MODELS_DEV_CACHE_FILE;
   } else {
-    process.env.AI_GIT_MODELS_DEV_CACHE_FILE = originalCacheFile;
+    process.env.AIGTC_MODELS_DEV_CACHE_FILE = originalCacheFile;
   }
 
   while (tempDirs.length > 0) {
@@ -127,6 +127,12 @@ describe("models-dev catalog client", () => {
     const catalog = await getModelCatalog({ forceRefresh: true });
 
     expect(catalog.source).toBe("snapshot");
-    expect(Object.keys(catalog.providers.openai.models).length).toBeGreaterThan(0);
+    expect(Object.keys(catalog.providers.anthropic.models)).toHaveLength(13);
+    expect(Object.keys(catalog.providers.openai.models)).toHaveLength(47);
+    expect(Object.keys(catalog.providers.google.models)).toHaveLength(39);
+    expect(catalog.providers.anthropic.models["claude-fable-5"]).toBeDefined();
+    expect(catalog.providers.openai.models["gpt-5.6-luna"]).toBeDefined();
+    expect(catalog.providers.google.models["gemini-3.7-flash"]).toBeDefined();
+    expect(catalog.providers.anthropic.models["claude-3-7-sonnet-latest"]).toBeUndefined();
   });
 });

@@ -10,7 +10,7 @@ import { cerebrasAdapter } from "./cerebras.ts";
 import { clearModelCatalogForTests } from "./models/index.ts";
 
 const originalFetch = globalThis.fetch;
-const originalCatalogOverride = process.env.AI_GIT_MODEL_CATALOG_OVERRIDE;
+const originalCatalogOverride = process.env.AIGTC_MODEL_CATALOG_OVERRIDE;
 
 const tempPaths: string[] = [];
 
@@ -103,7 +103,7 @@ function writeCatalogOverride(): string {
 
 beforeEach(() => {
   clearModelCatalogForTests();
-  process.env.AI_GIT_MODEL_CATALOG_OVERRIDE = writeCatalogOverride();
+  process.env.AIGTC_MODEL_CATALOG_OVERRIDE = writeCatalogOverride();
 });
 
 afterEach(() => {
@@ -111,9 +111,9 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 
   if (originalCatalogOverride === undefined) {
-    delete process.env.AI_GIT_MODEL_CATALOG_OVERRIDE;
+    delete process.env.AIGTC_MODEL_CATALOG_OVERRIDE;
   } else {
-    process.env.AI_GIT_MODEL_CATALOG_OVERRIDE = originalCatalogOverride;
+    process.env.AIGTC_MODEL_CATALOG_OVERRIDE = originalCatalogOverride;
   }
 
   while (tempPaths.length > 0) {

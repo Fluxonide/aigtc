@@ -19,7 +19,7 @@ import { kiroAdapter } from "./kiro.ts";
  * - Anthropic API - Claude models
  * - Google AI Studio - Gemini models
  * - Cerebras - Llama, Qwen, and other models on Wafer-Scale Engine
- * - Kiro - AWS Builder ID / CodeWhisperer (free tier, no API key needed)
+ * - Kiro - AWS CodeWhisperer streaming API with Builder ID authentication
  *
  * All adapters use Vercel AI SDK for consistent interface.
  */
