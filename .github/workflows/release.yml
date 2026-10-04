@@ -403,6 +403,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Homebrew Tap
+        if: ${{ secrets.TAP_PAT != '' }}
         uses: actions/checkout@v7
         with:
           repository: Fluxonide/homebrew-tap
@@ -410,6 +411,7 @@ jobs:
           path: homebrew-tap
 
       - name: Update Homebrew Formula
+        if: ${{ secrets.TAP_PAT != '' }}
         run: |
           VERSION="${{ github.ref_name }}"
 
@@ -451,6 +453,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NODE_AUTH_TOKEN }}
 
     steps:
       - name: Checkout
@@ -461,6 +465,7 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          scope: "@aigtc"
 
       - name: Install latest npm
         run: npm install -g npm@latest
