@@ -3,7 +3,7 @@
   "version": "0.0.0-git",
   "description": "A CLI tool that leverages AI to automatically generate semantically correct, Conventional Commits compliant git messages.",
   "license": "MIT",
-  "author": "Sadik Saifi <mail@Fluxonide.dev>",
+  "author": "Fluxonide <ranitz.2005@gmail.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/Fluxonide/aigtc"
