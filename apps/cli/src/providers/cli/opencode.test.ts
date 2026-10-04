@@ -34,6 +34,15 @@ describe("parseOpenCodeModelsVerbose", () => {
       { id: "anthropic/claude-haiku", name: "Claude Haiku" },
     ]);
   });
+
+  it("parses plain model list without metadata blocks", async () => {
+    const { parseOpenCodeModels } = await import("./opencode.ts");
+    const output = "opencode/nemotron-3.5-lightning-free\nopencode/space-bunny-free\n";
+    expect(parseOpenCodeModels(output)).toEqual([
+      { id: "opencode/nemotron-3.5-lightning-free", name: "opencode/nemotron-3.5-lightning-free" },
+      { id: "opencode/space-bunny-free", name: "opencode/space-bunny-free" },
+    ]);
+  });
 });
 
 describe("parseOpenCodeJsonText", () => {
@@ -47,17 +56,27 @@ describe("parseOpenCodeJsonText", () => {
 
     expect(parseOpenCodeJsonText(output)).toBe("feat: add provider");
   });
+
+  it("throws error message from error event if no text output", async () => {
+    const { parseOpenCodeJsonText } = await import("./opencode.ts");
+    const output = JSON.stringify({
+      type: "error",
+      error: { message: "Model quota exceeded" },
+    });
+
+    expect(() => parseOpenCodeJsonText(output)).toThrow("Model quota exceeded");
+  });
 });
 
 describe("opencodeAdapter.invoke", () => {
-  let spawnCalls: { cmd: string[]; opts: { env?: Record<string, string> } }[] = [];
+  let spawnCalls: { cmd: string[] }[] = [];
   let originalSpawn: typeof Bun.spawn;
 
   beforeEach(() => {
     spawnCalls = [];
     originalSpawn = Bun.spawn;
-    (Bun as any).spawn = (cmd: string[], opts: { env?: Record<string, string> }) => {
-      spawnCalls.push({ cmd, opts });
+    (Bun as any).spawn = (cmd: string[]) => {
+      spawnCalls.push({ cmd });
       return {
         stdout: new ReadableStream({
           start(controller) {
@@ -83,7 +102,7 @@ describe("opencodeAdapter.invoke", () => {
     (Bun as any).spawn = originalSpawn;
   });
 
-  it("splits # variants into --model and --variant and denies permissions", async () => {
+  it("invokes opencode run with model and combined prompt", async () => {
     const { opencodeAdapter } = await import("./opencode.ts");
 
     const result = await opencodeAdapter.invoke({
@@ -97,22 +116,53 @@ describe("opencodeAdapter.invoke", () => {
     expect(spawnCalls[0]!.cmd).toEqual([
       "opencode",
       "run",
-      "--pure",
       "--model",
-      "opencode/gpt-5-nano",
-      "--variant",
-      "low",
-      "--agent",
-      "aigtc",
+      "opencode/gpt-5-nano#low",
       "--format",
       "json",
-      "diff context",
+      "system rules\n\ndiff context",
     ]);
+  });
+});
 
-    const config = JSON.parse(spawnCalls[0]!.opts.env!.OPENCODE_CONFIG_CONTENT!);
-    expect(config.default_agent).toBe("aigtc");
-    expect(config.agent["aigtc"].prompt).toBe("system rules");
-    expect(config.agent["aigtc"].permission).toEqual({ "*": "deny" });
+describe("opencodeAdapter.fetchModels", () => {
+  let spawnCalls: { cmd: string[] }[] = [];
+  let originalSpawn: typeof Bun.spawn;
+
+  beforeEach(() => {
+    spawnCalls = [];
+    originalSpawn = Bun.spawn;
+    (Bun as any).spawn = (cmd: string[]) => {
+      spawnCalls.push({ cmd });
+      return {
+        stdout: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("opencode/nemotron-3.5-lightning-free\n"));
+            controller.close();
+          },
+        }),
+        stderr: new ReadableStream({
+          start(controller) {
+            controller.close();
+          },
+        }),
+        exited: Promise.resolve(0),
+      };
+    };
+  });
+
+  afterEach(() => {
+    (Bun as any).spawn = originalSpawn;
+  });
+
+  it("calls opencode models without --verbose", async () => {
+    const { opencodeAdapter } = await import("./opencode.ts");
+
+    const models = await opencodeAdapter.fetchModels!();
+    expect(models).toEqual([
+      { id: "opencode/nemotron-3.5-lightning-free", name: "opencode/nemotron-3.5-lightning-free" },
+    ]);
+    expect(spawnCalls[0]!.cmd).toEqual(["opencode", "models"]);
   });
 });
 

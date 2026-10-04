@@ -1,7 +1,5 @@
 import type { CLIProviderAdapter, InvokeOptions } from "../types.ts";
-import { parseDynamicVariantModel, readProcessOutput, type DynamicCLIModel } from "./dynamic.ts";
-
-const OPENCODE_AGENT = "aigtc";
+import { readProcessOutput, type DynamicCLIModel } from "./dynamic.ts";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -36,7 +34,7 @@ function readJsonBlock(
   return null;
 }
 
-export function parseOpenCodeModelsVerbose(output: string): DynamicCLIModel[] {
+export function parseOpenCodeModels(output: string): DynamicCLIModel[] {
   const lines = output.split(/\r?\n/);
   const models: DynamicCLIModel[] = [];
 
@@ -44,38 +42,47 @@ export function parseOpenCodeModelsVerbose(output: string): DynamicCLIModel[] {
     const baseId = (lines[i] ?? "").trim();
     i += 1;
 
-    if (!baseId || baseId.startsWith("{") || baseId.startsWith("[")) continue;
+    if (!baseId || baseId.startsWith("{") || baseId.startsWith("[") || baseId.startsWith("#"))
+      continue;
 
     const block = readJsonBlock(lines, i);
-    if (!block) continue;
-    i = block.nextIndex;
+    if (block) {
+      i = block.nextIndex;
 
-    let metadata: unknown;
-    try {
-      metadata = JSON.parse(block.json);
-    } catch {
-      continue;
+      let metadata: unknown;
+      try {
+        metadata = JSON.parse(block.json);
+      } catch {
+        metadata = null;
+      }
+
+      if (isPlainObject(metadata)) {
+        const displayName =
+          typeof metadata.name === "string" && metadata.name ? metadata.name : baseId;
+        const variants = isPlainObject(metadata.variants) ? Object.keys(metadata.variants) : [];
+
+        if (variants.length === 0) {
+          models.push({ id: baseId, name: displayName });
+        } else {
+          for (const variant of variants) {
+            models.push({ id: `${baseId}#${variant}`, name: `${displayName} (${variant})` });
+          }
+        }
+        continue;
+      }
     }
 
-    const record = isPlainObject(metadata) ? metadata : {};
-    const displayName = typeof record.name === "string" && record.name ? record.name : baseId;
-    const variants = isPlainObject(record.variants) ? Object.keys(record.variants) : [];
-
-    if (variants.length === 0) {
-      models.push({ id: baseId, name: displayName });
-      continue;
-    }
-
-    for (const variant of variants) {
-      models.push({ id: `${baseId}#${variant}`, name: `${displayName} (${variant})` });
-    }
+    models.push({ id: baseId, name: baseId });
   }
 
   return models;
 }
 
+export const parseOpenCodeModelsVerbose = parseOpenCodeModels;
+
 export function parseOpenCodeJsonText(output: string): string {
   const chunks: string[] = [];
+  let errorMessage: string | null = null;
 
   for (const line of output.split(/\r?\n/)) {
     const trimmed = line.trim();
@@ -83,7 +90,15 @@ export function parseOpenCodeJsonText(output: string): string {
 
     try {
       const event = JSON.parse(trimmed) as unknown;
-      if (!isPlainObject(event) || event.type !== "text" || !isPlainObject(event.part)) continue;
+      if (!isPlainObject(event)) continue;
+      if (
+        event.type === "error" &&
+        isPlainObject(event.error) &&
+        typeof event.error.message === "string"
+      ) {
+        errorMessage = event.error.message;
+      }
+      if (event.type !== "text" || !isPlainObject(event.part)) continue;
       const text = event.part.text;
       if (typeof text === "string") chunks.push(text);
     } catch {
@@ -91,7 +106,11 @@ export function parseOpenCodeJsonText(output: string): string {
     }
   }
 
-  return chunks.join("");
+  const result = chunks.join("");
+  if (!result && errorMessage) {
+    throw new Error(errorMessage);
+  }
+  return result;
 }
 
 export const opencodeAdapter: CLIProviderAdapter = {
@@ -100,33 +119,12 @@ export const opencodeAdapter: CLIProviderAdapter = {
   binary: "opencode",
 
   async invoke({ model, system, prompt }: InvokeOptions): Promise<string> {
-    const { model: baseModel, variant } = parseDynamicVariantModel(model);
-    const args = ["opencode", "run", "--pure", "--model", baseModel];
-
-    if (variant) {
-      args.push("--variant", variant);
-    }
-
-    args.push("--agent", OPENCODE_AGENT, "--format", "json", prompt);
-
-    const config = {
-      model: baseModel,
-      default_agent: OPENCODE_AGENT,
-      agent: {
-        [OPENCODE_AGENT]: {
-          prompt: system,
-          permission: { "*": "deny" },
-        },
-      },
-    };
+    const fullPrompt = system ? `${system}\n\n${prompt}` : prompt;
+    const args = ["opencode", "run", "--model", model, "--format", "json", fullPrompt];
 
     const proc = Bun.spawn(args, {
       stdout: "pipe",
       stderr: "pipe",
-      env: {
-        ...process.env,
-        OPENCODE_CONFIG_CONTENT: JSON.stringify(config),
-      },
     });
 
     const { stdout, stderr, exitCode } = await readProcessOutput(proc);
@@ -143,7 +141,7 @@ export const opencodeAdapter: CLIProviderAdapter = {
   },
 
   async fetchModels(): Promise<DynamicCLIModel[]> {
-    const proc = Bun.spawn(["opencode", "models", "--verbose"], {
+    const proc = Bun.spawn(["opencode", "models"], {
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -154,11 +152,9 @@ export const opencodeAdapter: CLIProviderAdapter = {
       throw new Error(`OpenCode model listing failed (exit code ${exitCode}): ${errorMessage}`);
     }
 
-    const models = parseOpenCodeModelsVerbose(stdout);
+    const models = parseOpenCodeModels(stdout);
     if (models.length === 0) {
-      throw new Error(
-        "OpenCode returned no usable models. Run `opencode models --verbose` to verify setup.",
-      );
+      throw new Error("OpenCode returned no usable models. Run `opencode models` to verify setup.");
     }
 
     return models;
