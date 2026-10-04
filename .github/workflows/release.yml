@@ -346,6 +346,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAP_PAT: ${{ secrets.TAP_PAT }}
 
     steps:
       - name: Checkout
@@ -399,15 +401,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Homebrew Tap
-        if: ${{ secrets.TAP_PAT != '' }}
+        if: env.TAP_PAT != ''
         uses: actions/checkout@v7
         with:
           repository: Fluxonide/homebrew-tap
-          token: ${{ secrets.TAP_PAT }}
+          token: ${{ env.TAP_PAT }}
           path: homebrew-tap
 
       - name: Update Homebrew Formula
-        if: ${{ secrets.TAP_PAT != '' }}
+        if: env.TAP_PAT != ''
         run: |
           VERSION="${{ github.ref_name }}"
 
