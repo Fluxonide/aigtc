@@ -1,7 +1,7 @@
 import type { CommandDef } from "./types.ts";
 
 // ==============================================================================
-// @ai-git/meta — Command Definitions
+// @aigtc/meta — Command Definitions
 // ==============================================================================
 
 /**
@@ -14,6 +14,6 @@ export const COMMANDS = {
   },
   upgrade: {
     name: "upgrade",
-    description: "Update ai-git to the latest version",
+    description: "Update aigtc to the latest version",
   },
 } as const satisfies Record<string, CommandDef>;

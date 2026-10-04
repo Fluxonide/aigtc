@@ -13,7 +13,7 @@ import { SECRETS_FILE } from "../paths.ts";
  * AES-256-GCM encrypted file fallback for environments without a keyring daemon
  * (containers, headless servers, WSL).
  *
- * Storage: ~/.config/ai-git/secrets.enc
+ * Storage: ~/.config/aigtc/secrets.enc
  * Key derivation: scrypt of machine-specific identifiers with a random salt
  * Encryption: AES-256-GCM with unique IV per entry
  *
@@ -49,7 +49,7 @@ function deriveEncryptionKey(salt: Buffer): Buffer {
     machineId = `${hostname()}:${userInfo().username}`;
   }
 
-  return scryptSync(`ai-git-secrets:${machineId}`, salt, 32, {
+  return scryptSync(`aigtc-secrets:${machineId}`, salt, 32, {
     N: 16384,
     r: 8,
     p: 1,
@@ -91,7 +91,7 @@ async function readStore(secretsPath: string): Promise<SecretsFile> {
     return data;
   } catch (err) {
     console.warn(
-      `[ai-git] Warning: failed to read secrets file at ${secretsPath} — starting fresh.`,
+      `[aigtc] Warning: failed to read secrets file at ${secretsPath} — starting fresh.`,
       err instanceof Error ? err.message : err,
     );
     return { version: 1, salt: "", secrets: {} };

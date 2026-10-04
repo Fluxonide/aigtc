@@ -27,7 +27,7 @@ export class BunSecretsManager implements SecretsManager {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await Bun.secrets.get({ service: "ai-git", name: "__probe__" });
+      await Bun.secrets.get({ service: "aigtc", name: "__probe__" });
       return true;
     } catch {
       return false;

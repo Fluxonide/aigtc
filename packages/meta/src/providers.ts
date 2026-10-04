@@ -1,7 +1,7 @@
 import type { ProviderDoc, CLIProviderDoc } from "./types.ts";
 
 // ==============================================================================
-// @ai-git/meta — Provider Documentation
+// @aigtc/meta — Provider Documentation
 // ==============================================================================
 
 /**

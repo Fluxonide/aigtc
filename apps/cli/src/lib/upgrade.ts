@@ -56,7 +56,7 @@ export function detectPlatform(): PlatformInfo | null {
   return {
     os: osName,
     arch: archName,
-    archiveName: `ai-git-${osName}-${archName}.tar.gz`,
+    archiveName: `aigtc-${osName}-${archName}.tar.gz`,
   };
 }
 
@@ -128,7 +128,7 @@ export async function downloadRelease(
   const tarballUrl = `${GITHUB_RELEASE_BASE}/${tag}/${platform.archiveName}`;
   const checksumsUrl = `${GITHUB_RELEASE_BASE}/${tag}/checksums.txt`;
 
-  const tmpDir = path.join(os.tmpdir(), `ai-git-upgrade-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `aigtc-upgrade-${Date.now()}`);
   fs.mkdirSync(tmpDir, { recursive: true });
 
   const tarballPath = path.join(tmpDir, platform.archiveName);
@@ -173,7 +173,7 @@ export async function downloadRelease(
 export async function extractBinary(tarballPath: string, tmpDir: string): Promise<string> {
   await $`tar -xzf ${tarballPath} -C ${tmpDir}`.quiet();
 
-  const extractedBinPath = path.join(tmpDir, "ai-git");
+  const extractedBinPath = path.join(tmpDir, "aigtc");
   if (!fs.existsSync(extractedBinPath)) {
     throw new CLIError("Extracted binary not found. Aborting upgrade.");
   }
@@ -194,7 +194,7 @@ export function installBinary(extractedBinPath: string): void {
   try {
     targetPath = fs.realpathSync(process.argv[0] ?? "");
   } catch {
-    targetPath = path.join(os.homedir(), ".local", "bin", "ai-git");
+    targetPath = path.join(os.homedir(), ".local", "bin", "aigtc");
   }
 
   // Ensure target directory exists
@@ -207,7 +207,7 @@ export function installBinary(extractedBinPath: string): void {
     throw new CLIError(
       `Permission denied: cannot write to ${path.dirname(targetPath)}.`,
       1,
-      "Try: sudo ai-git upgrade",
+      "Try: sudo aigtc upgrade",
     );
   }
 

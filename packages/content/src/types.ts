@@ -1,5 +1,5 @@
 // ==============================================================================
-// @ai-git/content — Shared Content Types
+// @aigtc/content — Shared Content Types
 // ==============================================================================
 
 export interface HeroContent {

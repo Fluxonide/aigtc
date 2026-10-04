@@ -1,7 +1,7 @@
 import type { FlagDef, FlagCategory, FlagCategoryDef } from "./types.ts";
 
 // ==============================================================================
-// @ai-git/meta — Flag Definitions
+// @aigtc/meta — Flag Definitions
 // ==============================================================================
 
 /**

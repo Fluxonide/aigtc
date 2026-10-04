@@ -45,7 +45,7 @@ export interface PromptCustomization {
 }
 
 /**
- * User configuration schema for ~/.config/ai-git/config.json
+ * User configuration schema for ~/.config/aigtc/config.json
  */
 export interface UserConfig {
   /** Default provider ID */
@@ -86,12 +86,12 @@ export interface ResolvedConfig {
 export { CONFIG_DIR, CONFIG_FILE };
 
 /**
- * Get the path to the project config file (.ai-git.json).
+ * Get the path to the project config file (.aigtc.json).
  * Looks for it in the git repo root, or current directory if not in a repo.
  */
 export async function getProjectConfigPath(): Promise<string> {
   const repoRoot = await getRepoRoot();
-  return path.join(repoRoot || process.cwd(), ".ai-git.json");
+  return path.join(repoRoot || process.cwd(), ".aigtc.json");
 }
 
 /** Pending migration notice to display after the welcome screen. */
@@ -164,7 +164,7 @@ export async function loadProjectConfig(): Promise<UserConfig | undefined> {
     const raw = JSON.parse(content);
 
     // Migrate in-memory only — don't auto-save project configs since
-    // .ai-git.json is typically committed and auto-rewriting would
+    // .aigtc.json is typically committed and auto-rewriting would
     // produce unexpected diffs for team members.
     const { config } = migrateConfig(raw);
 
@@ -177,7 +177,7 @@ export async function loadProjectConfig(): Promise<UserConfig | undefined> {
 /**
  * JSON Schema URL for editor autocomplete and validation.
  */
-const CONFIG_SCHEMA_URL = "https://raw.githubusercontent.com/sadiksaifi/ai-git/main/schema.json";
+const CONFIG_SCHEMA_URL = "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json";
 
 /**
  * Save user configuration to the config file.
@@ -314,7 +314,7 @@ export async function resolveConfigAsync(
     (!projectConfig || !isConfigComplete(projectConfig)) &&
     !hasCompleteCliOptions
   ) {
-    throw new Error("Configuration is incomplete. Please run: ai-git configure");
+    throw new Error("Configuration is incomplete. Please run: aigtc configure");
   }
 
   // Base config is user config, or empty if not present (but one of them must be present per above check)

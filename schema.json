@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/sadiksaifi/ai-git/main/schema.json",
+  "$id": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "title": "AI Git Configuration",
   "description": "Configuration schema for AI Git CLI tool",
   "type": "object",
@@ -250,7 +250,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "OpenCode model ID fetched dynamically from `opencode models --verbose`. Variant selections use '<base-model>#<variant>'."
+            "description": "OpenCode model ID fetched dynamically from `opencode models`. Variant selections use '<base-model>#<variant>'."
           }
         }
       }

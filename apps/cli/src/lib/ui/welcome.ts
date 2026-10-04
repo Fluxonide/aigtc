@@ -6,7 +6,7 @@
 import * as os from "node:os";
 import pc from "picocolors";
 import { BOX } from "./constants.ts";
-import { getRandomTip } from "@ai-git/meta";
+import { getRandomTip } from "@aigtc/meta";
 import { getRepoRoot } from "../git.ts";
 
 export interface WelcomeResult {
@@ -161,7 +161,7 @@ export async function showWelcomeScreen(
     );
   }
 
-  rightContent.push(` ${pc.bold("Tip:")} ${pc.cyan(`ai-git ${tip.flag}`)}`);
+  rightContent.push(` ${pc.bold("Tip:")} ${pc.cyan(`aigtc ${tip.flag}`)}`);
 
   // Wrap tip description
   const wrappedTip = wrapText(tip.description, rightWidth - 2); // -2 for left padding

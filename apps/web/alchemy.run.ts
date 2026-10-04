@@ -40,7 +40,7 @@ const app = await alchemy(APP_NAME, {
 // or CI) runs `bun run build` beforehand and Alchemy just uploads `./dist`.
 // This matches Alchemy's own pr-preview workflow.
 export const site = await Website("site", {
-  name: `ai-git-${APP_NAME}`,
+  name: `aigtc-${APP_NAME}`,
   assets: "./dist",
   spa: false,
   url: true,

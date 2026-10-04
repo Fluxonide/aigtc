@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# AI Git installer — https://ai-git.xyz
+# AI Git installer — https://aigtc.xyz
 #
 # Usage:
-#   curl -fsSL https://ai-git.xyz/install | bash
-#   curl -fsSL https://ai-git.xyz/install | bash -s -- --version v2.5.0
-#   curl -fsSL https://ai-git.xyz/install | bash -s -- --no-modify-path
+#   curl -fsSL https://aigtc.xyz/install | bash
+#   curl -fsSL https://aigtc.xyz/install | bash -s -- --version v2.5.0
+#   curl -fsSL https://aigtc.xyz/install | bash -s -- --no-modify-path
 set -euo pipefail
 
 # ==============================================================================
 # Configuration
 # ==============================================================================
 
-REPO="sadiksaifi/ai-git"
+REPO="Fluxonide/aigtc"
 INSTALL_DIR="${AI_GIT_INSTALL_DIR:-$HOME/.local/bin}"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/ai-git"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/aigtc"
 VERSION=""
 MODIFY_PATH=true
 TMP_DIR=""
@@ -92,7 +92,7 @@ detect_platform() {
   esac
 
   PLATFORM="${os}-${arch}"
-  ARCHIVE="ai-git-${PLATFORM}.tar.gz"
+  ARCHIVE="aigtc-${PLATFORM}.tar.gz"
 }
 
 # ==============================================================================
@@ -127,7 +127,7 @@ download_and_install() {
   local tarball_url="https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}"
   local checksums_url="https://github.com/${REPO}/releases/download/${VERSION}/checksums.txt"
 
-  info "Downloading ai-git ${VERSION} (${PLATFORM})..."
+  info "Downloading aigtc ${VERSION} (${PLATFORM})..."
   curl -fsSL "$tarball_url" -o "${TMP_DIR}/${ARCHIVE}"
   curl -fsSL "$checksums_url" -o "${TMP_DIR}/checksums.txt"
 
@@ -159,8 +159,8 @@ download_and_install() {
 
   # Install
   mkdir -p "$INSTALL_DIR"
-  mv "${TMP_DIR}/ai-git" "${INSTALL_DIR}/ai-git"
-  chmod +x "${INSTALL_DIR}/ai-git"
+  mv "${TMP_DIR}/aigtc" "${INSTALL_DIR}/aigtc"
+  chmod +x "${INSTALL_DIR}/aigtc"
 
   # Write install method marker
   mkdir -p "$STATE_DIR"
@@ -190,7 +190,7 @@ setup_path() {
       local rc="$HOME/.bashrc"
       if ! grep -qF "$INSTALL_DIR" "$rc" 2>/dev/null; then
         echo "" >> "$rc"
-        echo "# ai-git" >> "$rc"
+        echo "# aigtc" >> "$rc"
         echo "$path_line" >> "$rc"
         info "Added ${INSTALL_DIR} to PATH in ${rc}"
       fi
@@ -199,13 +199,13 @@ setup_path() {
       local rc="$HOME/.zshrc"
       if ! grep -qF "$INSTALL_DIR" "$rc" 2>/dev/null; then
         echo "" >> "$rc"
-        echo "# ai-git" >> "$rc"
+        echo "# aigtc" >> "$rc"
         echo "$path_line" >> "$rc"
         info "Added ${INSTALL_DIR} to PATH in ${rc}"
       fi
       ;;
     fish)
-      local fish_conf="$HOME/.config/fish/conf.d/ai-git.fish"
+      local fish_conf="$HOME/.config/fish/conf.d/aigtc.fish"
       mkdir -p "$(dirname "$fish_conf")"
       if [ ! -f "$fish_conf" ]; then
         echo "set -gx PATH ${INSTALL_DIR} \$PATH" > "$fish_conf"
@@ -226,7 +226,7 @@ main() {
   need_cmd curl
   need_cmd tar
 
-  bold "ai-git installer"
+  bold "aigtc installer"
   echo ""
 
   detect_platform
@@ -235,13 +235,13 @@ main() {
   setup_path
 
   echo ""
-  success "ai-git ${VERSION} installed to ${INSTALL_DIR}/ai-git"
+  success "aigtc ${VERSION} installed to ${INSTALL_DIR}/aigtc"
   echo ""
 
   # Check if install dir is in current PATH
   case ":${PATH}:" in
     *":${INSTALL_DIR}:"*)
-      info "Run 'ai-git' to get started."
+      info "Run 'aigtc' to get started."
       ;;
     *)
       info "Restart your shell or run:"

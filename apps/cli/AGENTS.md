@@ -11,7 +11,7 @@ AI Git is a CLI tool that uses AI to generate Conventional Commits-compliant git
 ```bash
 bun install             # Install dependencies
 bun run dev             # Run CLI in development
-bun run build           # Build single binary (dist/ai-git)
+bun run build           # Build single binary (dist/aigtc)
 bun run typecheck       # Type check without emitting
 bun test                # Run tests
 bun run dev --dry-run -a  # Test prompt generation without AI call
@@ -64,7 +64,7 @@ Reusable `fromPromise()` actors with factory pattern for test dependency injecti
 ### Key Components
 
 - **`src/index.ts`** - CLI entry point: parses args with cac, delegates to XState machines
-- **`src/config.ts`** - Two-tier config system: project (`.ai-git.json`) > global (`~/.config/ai-git/config.json`)
+- **`src/config.ts`** - Two-tier config system: project (`.aigtc.json`) > global (`~/.config/aigtc/config.json`)
 - **`src/prompt.ts`** - System prompt definitions for Conventional Commits schema
 - **`src/types.ts`** - Core TypeScript interfaces (`Mode`, `Provider`, `Model` definitions)
 - **`src/lib/errors.ts`** - Shared error types (`UserCancelledError`, `CLIError`, `extractErrorMessage()`)
@@ -83,7 +83,7 @@ Provider registry in `registry.ts` defines available providers and models.
 API model filtering/ranking/defaults/deprecation checks are centralized here:
 
 - Source of truth: runtime fetch from `https://models.dev/api.json`
-- Cache: `~/.cache/ai-git/models-dev-catalog.json`
+- Cache: `~/.cache/aigtc/models-dev-catalog.json`
 - Fallback: bundled snapshot in `src/providers/api/models/snapshot.ts`
 - Behavior: deterministic tiered ranking + provider ordering for OpenRouter
 - Safety: deprecated configured API models are hard-failed with setup guidance
@@ -190,7 +190,7 @@ Backup + user notification is handled automatically by the migration engine in `
 
 ## Config Priority
 
-CLI flags > Project config (`.ai-git.json`) > Global config (`~/.config/ai-git/config.json`) > Built-in defaults
+CLI flags > Project config (`.aigtc.json`) > Global config (`~/.config/aigtc/config.json`) > Built-in defaults
 
 ## State Machine Reference
 

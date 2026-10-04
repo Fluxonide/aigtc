@@ -1,6 +1,6 @@
 ---
 name: 🥺 Help wanted
-about: Need help with ai-git
+about: Need help with aigtc
 title: "[Help] "
 labels: help wanted
 assignees: ""
@@ -25,7 +25,7 @@ If applicable, share the command you're trying to run:
 #### Environment:
 
 - macOS version: [e.g. 13.0]
-- ai-git version: [e.g. 0.0.1]
+- aigtc version: [e.g. 0.0.1]
 
 #### Additional context
 

@@ -146,7 +146,7 @@ export async function diagnoseConfig(config: UserConfig | undefined): Promise<Co
           errors.push({
             code: "DEPRECATED_MODEL",
             message: `Configured model '${metadata?.name || config.model}' is deprecated.`,
-            suggestion: "Run: ai-git configure to choose a supported model.",
+            suggestion: "Run: aigtc configure to choose a supported model.",
           });
         }
       } catch {

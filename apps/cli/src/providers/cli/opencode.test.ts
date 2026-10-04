@@ -103,16 +103,16 @@ describe("opencodeAdapter.invoke", () => {
       "--variant",
       "low",
       "--agent",
-      "ai-git",
+      "aigtc",
       "--format",
       "json",
       "diff context",
     ]);
 
     const config = JSON.parse(spawnCalls[0]!.opts.env!.OPENCODE_CONFIG_CONTENT!);
-    expect(config.default_agent).toBe("ai-git");
-    expect(config.agent["ai-git"].prompt).toBe("system rules");
-    expect(config.agent["ai-git"].permission).toEqual({ "*": "deny" });
+    expect(config.default_agent).toBe("aigtc");
+    expect(config.agent["aigtc"].prompt).toBe("system rules");
+    expect(config.agent["aigtc"].permission).toEqual({ "*": "deny" });
   });
 });
 

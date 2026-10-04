@@ -9,7 +9,7 @@
 import { fromPromise } from "xstate";
 import pc from "picocolors";
 import { log, spinner } from "@clack/prompts";
-import { ERROR_TEMPLATES } from "@ai-git/meta";
+import { ERROR_TEMPLATES } from "@aigtc/meta";
 import {
   cliMachine,
   type ConfigResolutionResult,
@@ -120,7 +120,7 @@ async function resolveFullConfig(
             `Error: ${error instanceof Error ? error.message : "Configured model is not allowed."}`,
           ),
         );
-        console.error(pc.dim("Run `ai-git configure` to select a supported model."));
+        console.error(pc.dim("Run `aigtc configure` to select a supported model."));
         throw error;
       }
     }
@@ -131,7 +131,7 @@ async function resolveFullConfig(
         pc.red(`Error: Unknown model '${modelId}' for provider '${providerDef.name}'.`),
       );
       console.error(pc.dim(`Available models: ${providerDef.models.map((m) => m.id).join(", ")}`));
-      console.error(pc.dim("Run `ai-git configure` to select a supported model."));
+      console.error(pc.dim("Run `aigtc configure` to select a supported model."));
       throw new Error(`Unknown model '${modelId}' for provider '${providerDef.name}'`);
     }
     model = modelDef.id;
@@ -278,7 +278,7 @@ export const wiredCliMachine = cliMachine.provide({
               const validProviders = PROVIDERS.map((p) => p.id).join(", ");
               console.error(pc.red(`Error: Unknown provider '${bestConfig.provider}'.`));
               console.error(pc.dim(`Supported providers: ${validProviders}`));
-              console.error(pc.dim("Run `ai-git configure` to select a valid provider."));
+              console.error(pc.dim("Run `aigtc configure` to select a valid provider."));
               throw new Error(`Unknown provider '${bestConfig.provider}'`);
             }
             // Provider is valid but model is not
@@ -288,7 +288,7 @@ export const wiredCliMachine = cliMachine.provide({
             console.error(
               pc.dim(`Available models: ${provider.models.map((m) => m.id).join(", ")}`),
             );
-            console.error(pc.dim("Run `ai-git configure` to select a valid model."));
+            console.error(pc.dim("Run `aigtc configure` to select a valid model."));
             throw new Error(`Unknown model '${bestConfig.model}' for provider '${provider.name}'`);
           }
 
@@ -342,7 +342,7 @@ export const wiredCliMachine = cliMachine.provide({
     runOnboardingActor: fromPromise(
       async ({ input: _input }: { input: Record<string, unknown> }) => {
         // First-run auto-trigger: when no config exists, show a brief message
-        // then launch the same configure flow as `ai-git configure`.
+        // then launch the same configure flow as `aigtc configure`.
         // Dynamic import avoids circular dependency (configure.ts → init.machine).
         log.warn(ERROR_TEMPLATES.noConfig.message);
         const { runConfigureFlow } = await import("../lib/configure.ts");
@@ -395,7 +395,7 @@ export const wiredCliMachine = cliMachine.provide({
           console.error(`The ${providerDef.name} CLI must be installed to use AI Git.`);
           console.error("");
           console.error(pc.dim("To switch to a different provider, run:"));
-          console.error(pc.dim("  ai-git configure"));
+          console.error(pc.dim("  aigtc configure"));
         } else {
           console.error(pc.red(`Error: Provider '${providerDef.id}' is not available.`));
           console.error(pc.dim("Check your API key configuration."));

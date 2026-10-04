@@ -15,7 +15,7 @@ import type { CLIProviderAdapter, InvokeOptions, APIModelDefinition } from "../t
 import { readProcessOutput } from "./dynamic.ts";
 
 const MINIMUM_ANTIGRAVITY_VERSION = [1, 1, 13] as const;
-const ISOLATED_PROFILE_PREFIX = "ai-git-antigravity-";
+const ISOLATED_PROFILE_PREFIX = "aigtc-antigravity-";
 const DENY_REASON = "AI Git disables all Antigravity tools.";
 const ANTIGRAVITY_PREFLIGHT_TIMEOUT_MS = 30_000;
 const ANTIGRAVITY_GENERATION_TIMEOUT_MS = 130_000;
@@ -304,7 +304,7 @@ export async function createIsolatedRuntime(
     const workspace = join(root, "workspace");
     const cliConfigDir = join(root, "antigravity-cli");
     const sharedConfigDir = join(root, "config");
-    const agentDir = join(sharedConfigDir, "agents", "ai-git");
+    const agentDir = join(sharedConfigDir, "agents", "aigtc");
     await Promise.all([
       mkdir(workspace, { recursive: true, mode: 0o700 }),
       mkdir(cliConfigDir, { recursive: true, mode: 0o700 }),
@@ -333,7 +333,7 @@ export async function createIsolatedRuntime(
       },
     };
     const hooks = {
-      "ai-git-deny-all": {
+      "aigtc-deny-all": {
         PreToolUse: [
           {
             matcher: "*",
@@ -343,7 +343,7 @@ export async function createIsolatedRuntime(
       },
     };
     const agent = `---
-name: ai-git
+name: aigtc
 description: Generate an AI Git commit message without tools or delegation.
 tools: []
 mainAgent: true
@@ -454,7 +454,7 @@ async function assertIsolatedProfile(runtime: IsolatedRuntime, model: string): P
   );
   if (!availableModelIds.includes(model)) {
     throw new Error(
-      `Antigravity model '${model}' is not available for the signed-in Antigravity account. Run \`ai-git configure\` to select an available model.`,
+      `Antigravity model '${model}' is not available for the signed-in Antigravity account. Run \`aigtc configure\` to select an available model.`,
     );
   }
 }
@@ -521,7 +521,7 @@ export const antigravityAdapter: CLIProviderAdapter = {
           `--gemini_dir=${runtime.root}`,
           "--sandbox",
           "--agent",
-          "ai-git",
+          "aigtc",
           "--model",
           model,
           "--output-format",

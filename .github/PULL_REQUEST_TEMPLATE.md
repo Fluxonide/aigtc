@@ -1,4 +1,4 @@
-<!-- Thank you for contributing to ai-git! -->
+<!-- Thank you for contributing to aigtc! -->
 
 ### Description
 

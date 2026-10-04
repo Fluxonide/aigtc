@@ -1,11 +1,11 @@
 {
-  "name": "@ai-git/darwin-arm64",
+  "name": "@aigtc/darwin-arm64",
   "version": "0.0.0",
-  "description": "ai-git binary for macOS ARM64",
+  "description": "aigtc binary for macOS ARM64",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sadiksaifi/ai-git"
+    "url": "https://github.com/Fluxonide/aigtc"
   },
   "files": [
     "bin/",

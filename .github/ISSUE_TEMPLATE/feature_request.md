@@ -1,6 +1,6 @@
 ---
 name: ✨ Feature request
-about: Suggest an idea for ai-git
+about: Suggest an idea for aigtc
 title: "[Feature] "
 labels: enhancement
 assignees: ""

@@ -1,11 +1,11 @@
 {
-  "name": "@ai-git/linux-x64",
+  "name": "@aigtc/linux-x64",
   "version": "0.0.0",
-  "description": "ai-git binary for Linux x64",
+  "description": "aigtc binary for Linux x64",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sadiksaifi/ai-git"
+    "url": "https://github.com/Fluxonide/aigtc"
   },
   "files": [
     "bin/",

@@ -18,7 +18,7 @@ describe("categorizeError", () => {
   });
 
   test("message containing 'model not found' → model-not-found", () => {
-    const error = new Error("OpenAI model not found: Run 'ai-git configure'");
+    const error = new Error("OpenAI model not found: Run 'aigtc configure'");
     const result = categorizeError(error, apiAdapter, "gpt-99-turbo");
     expect(result.category).toBe("model-not-found");
     expect(result.providerName).toBe("OpenAI");
@@ -76,10 +76,10 @@ describe("displayAIError", () => {
       }),
     );
     expect(output).toContain("gpt-99-turbo");
-    expect(output).toContain("ai-git configure");
+    expect(output).toContain("aigtc configure");
   });
 
-  test("api-error includes provider name and 'not ai-git' guidance", () => {
+  test("api-error includes provider name and 'not aigtc' guidance", () => {
     const output = captureStderr(() =>
       displayAIError({
         category: "api-error",
@@ -89,7 +89,7 @@ describe("displayAIError", () => {
     );
     expect(output).toContain("OpenAI");
     expect(output).toContain("authentication failed");
-    expect(output).toContain("not ai-git");
+    expect(output).toContain("not aigtc");
     expect(output).toContain("API key");
     expect(output).toContain("status page");
   });

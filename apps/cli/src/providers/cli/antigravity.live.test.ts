@@ -44,9 +44,7 @@ async function snapshotPersistentHistory(): Promise<string[]> {
 }
 
 async function isolatedProfileNames(): Promise<string[]> {
-  return (await readdir(tmpdir()))
-    .filter((entry) => entry.startsWith("ai-git-antigravity-"))
-    .sort();
+  return (await readdir(tmpdir())).filter((entry) => entry.startsWith("aigtc-antigravity-")).sort();
 }
 
 liveTest(
@@ -67,7 +65,7 @@ liveTest(
       throw new Error(`Antigravity model '${requestedModel}' is unavailable for this account.`);
     }
 
-    const sourceRoot = await mkdtemp(join(tmpdir(), "ai-git-antigravity-live-source-"));
+    const sourceRoot = await mkdtemp(join(tmpdir(), "aigtc-antigravity-live-source-"));
     const readSecret = `repository-${crypto.randomUUID()}`;
     const customizationSecret = `customization-${crypto.randomUUID()}`;
     const webSecret = `web-${crypto.randomUUID()}`;

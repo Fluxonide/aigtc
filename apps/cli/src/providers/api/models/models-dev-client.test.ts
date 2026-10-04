@@ -12,7 +12,7 @@ const originalCacheFile = process.env.AI_GIT_MODELS_DEV_CACHE_FILE;
 const tempDirs: string[] = [];
 
 function createTempCacheFile(): string {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ai-git-model-catalog-cache-"));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "aigtc-model-catalog-cache-"));
   tempDirs.push(tempDir);
   const cacheFile = path.join(tempDir, "models-dev-catalog.json");
   process.env.AI_GIT_MODELS_DEV_CACHE_FILE = cacheFile;

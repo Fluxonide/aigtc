@@ -3,9 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 const PLATFORMS = {
-  darwin: { arm64: "@ai-git/darwin-arm64", x64: "@ai-git/darwin-x64" },
-  linux: { arm64: "@ai-git/linux-arm64", x64: "@ai-git/linux-x64" },
-  win32: { arm64: "@ai-git/win32-arm64", x64: "@ai-git/win32-x64" },
+  darwin: { arm64: "@aigtc/darwin-arm64", x64: "@aigtc/darwin-x64" },
+  linux: { arm64: "@aigtc/linux-arm64", x64: "@aigtc/linux-x64" },
+  win32: { arm64: "@aigtc/win32-arm64", x64: "@aigtc/win32-x64" },
 };
 
 // Write install method marker
@@ -15,16 +15,16 @@ function writeMarker() {
     let stateDir;
     if (isWindows) {
       const base = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
-      stateDir = path.join(base, "ai-git", "state");
+      stateDir = path.join(base, "aigtc", "state");
     } else {
       const base = process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state");
-      stateDir = path.join(base, "ai-git");
+      stateDir = path.join(base, "aigtc");
     }
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(path.join(stateDir, "install-method"), "npm");
   } catch (err) {
     if (process.env.npm_config_loglevel !== "silent") {
-      console.warn(`ai-git: Could not write install method marker: ${err.message}`);
+      console.warn(`aigtc: Could not write install method marker: ${err.message}`);
     }
   }
 }
@@ -53,10 +53,10 @@ function main() {
 
   // Platform binary not found (e.g., --ignore-optional was used)
   // Provide guidance rather than silently failing
-  console.warn(`\nai-git: Platform binary not found for ${os.platform()}-${os.arch()}.`);
+  console.warn(`\naigtc: Platform binary not found for ${os.platform()}-${os.arch()}.`);
   console.warn("If you used --ignore-optional, the platform package was skipped.");
   console.warn(
-    "You can install the binary manually: curl -fsSL https://ai-git.xyz/install | bash\n",
+    "You can install the binary manually: curl -fsSL https://aigtc.xyz/install | bash\n",
   );
 
   writeMarker();

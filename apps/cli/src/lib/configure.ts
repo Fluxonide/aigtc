@@ -14,12 +14,12 @@ import { UserCancelledError, extractErrorMessage } from "./errors.ts";
  */
 export interface ConfigureResult {
   exitCode: 0 | 1;
-  /** Whether the user wants to continue running ai-git after setup. */
+  /** Whether the user wants to continue running aigtc after setup. */
   continueToRun: boolean;
 }
 
 /**
- * Shared configure flow used by both `ai-git configure` command
+ * Shared configure flow used by both `aigtc configure` command
  * and the first-run auto-trigger in cliMachine.
  *
  * Prompts user to choose Global or Project configuration,
@@ -35,12 +35,12 @@ export async function runConfigureFlow(
         {
           value: "global" as const,
           label: "Global",
-          hint: "~/.config/ai-git/config.json",
+          hint: "~/.config/aigtc/config.json",
         },
         {
           value: "project" as const,
           label: "Project",
-          hint: ".ai-git.json in current repo",
+          hint: ".aigtc.json in current repo",
         },
       ],
     });

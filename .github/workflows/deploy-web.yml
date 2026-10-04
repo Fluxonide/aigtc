@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 10
     environment:
       name: production
-      url: https://ai-git.xyz
+      url: https://aigtc.xyz
 
     steps:
       - uses: actions/checkout@v7

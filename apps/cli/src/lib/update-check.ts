@@ -9,7 +9,7 @@ import { detectInstallMethod } from "./install-method.ts";
 // ==============================================================================
 
 /**
- * Schema for the update cache file stored at ~/.cache/ai-git/update-cache.json
+ * Schema for the update cache file stored at ~/.cache/aigtc/update-cache.json
  */
 interface UpdateCache {
   /** ISO timestamp of last check */
@@ -50,7 +50,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 3000;
 
 /** GitHub repository (owner/name) */
-export const GITHUB_REPO = "sadiksaifi/ai-git";
+export const GITHUB_REPO = "Fluxonide/aigtc";
 
 /** GitHub API endpoint */
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -136,7 +136,7 @@ export async function fetchLatestRelease(): Promise<GitHubRelease | null> {
       signal: controller.signal,
       headers: {
         Accept: "application/vnd.github.v3+json",
-        "User-Agent": "ai-git-cli",
+        "User-Agent": "aigtc-cli",
       },
     });
 
@@ -233,16 +233,16 @@ function getUpdateInstruction(): string {
   const method = detectInstallMethod();
   switch (method) {
     case "brew":
-      return "Run: brew upgrade ai-git";
+      return "Run: brew upgrade aigtc";
     case "npm":
-      return "Run: npm update -g @ai-git/cli";
+      return "Run: npm update -g @aigtc/cli";
     case "curl":
-      return "Run: ai-git upgrade";
+      return "Run: aigtc upgrade";
     case "source":
       return "Pull latest and rebuild: git pull && bun install && bun run build";
     case "unknown":
     default:
-      return "Run: ai-git upgrade  |  Visit: https://github.com/sadiksaifi/ai-git/releases/latest";
+      return "Run: aigtc upgrade  |  Visit: https://github.com/Fluxonide/aigtc/releases/latest";
   }
 }
 

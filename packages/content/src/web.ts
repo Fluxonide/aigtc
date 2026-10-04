@@ -9,46 +9,46 @@ import type {
 } from "./types.ts";
 
 // ==============================================================================
-// @ai-git/content/web — Marketing Site Content
+// @aigtc/content/web — Marketing Site Content
 // ==============================================================================
 
 export const seo = {
   site: {
-    name: "ai-git",
-    url: "https://ai-git.xyz",
+    name: "aigtc",
+    url: "https://aigtc.xyz",
     locale: "en_US",
     themeColor: "#0a0a0a",
   },
   home: {
-    title: "AI Git Commit Message Generator CLI | ai-git",
+    title: "AI Git Commit Message Generator CLI | aigtc",
     description:
-      "ai-git reads your git diff and writes Conventional Commits-compliant messages with Claude, OpenAI, Gemini, OpenRouter, and local CLI providers.",
+      "aigtc reads your git diff and writes Conventional Commits-compliant messages with Claude, OpenAI, Gemini, OpenRouter, and local CLI providers.",
   } as PageSEO,
   docs: {
-    title: "Docs — ai-git",
-    description: "Installation, configuration, providers, and custom prompts for ai-git.",
+    title: "Docs — aigtc",
+    description: "Installation, configuration, providers, and custom prompts for aigtc.",
   } as PageSEO,
   openGraph: {
     type: "website" as const,
-    siteName: "ai-git",
+    siteName: "aigtc",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "ai-git — stop writing commit messages",
+        alt: "aigtc — stop writing commit messages",
       },
     ] as readonly OGImage[],
   },
   twitter: {
     card: "summary_large_image" as const,
-    site: "@thesadiksaifi",
-    creator: "@thesadiksaifi",
+    site: "@theFluxonide",
+    creator: "@theFluxonide",
     image: {
       url: "/twitter.png",
       width: 1200,
       height: 628,
-      alt: "ai-git — stop writing commit messages",
+      alt: "aigtc — stop writing commit messages",
     },
   },
   icons: {
@@ -63,10 +63,10 @@ export const seo = {
 
 export const hero: HeroContent = {
   headline: "Stop writing commit messages.",
-  subheadline: "ai-git reads your diff and writes the commit. Works with any AI provider.",
+  subheadline: "aigtc reads your diff and writes the commit. Works with any AI provider.",
   cta: {
     label: "GitHub",
-    href: "https://github.com/sadiksaifi/ai-git",
+    href: "https://github.com/Fluxonide/aigtc",
   },
 };
 
@@ -75,14 +75,14 @@ export const hero: HeroContent = {
 // ------------------------------------------------------------------------------
 
 export const installTabs: readonly InstallTab[] = [
-  { id: "npm", label: "npm", command: "npm install -g @ai-git/cli" },
-  { id: "brew", label: "brew", command: "brew install sadiksaifi/tap/ai-git" },
-  { id: "curl", label: "curl", command: "curl -fsSL https://ai-git.xyz/install | bash" },
+  { id: "npm", label: "npm", command: "npm install -g @aigtc/cli" },
+  { id: "brew", label: "brew", command: "brew install Fluxonide/tap/aigtc" },
+  { id: "curl", label: "curl", command: "curl -fsSL https://aigtc.xyz/install | bash" },
   {
     id: "source",
     label: "source",
     command:
-      "git clone https://github.com/sadiksaifi/ai-git && cd ai-git && bun install && bun run build",
+      "git clone https://github.com/Fluxonide/aigtc && cd aigtc && bun install && bun run build",
   },
 ] as const;
 
@@ -104,7 +104,7 @@ export const faq: readonly FAQItem[] = [
   {
     question: "Can my team enforce a commit style?",
     answer:
-      "Yes. Commit <code>.ai-git.json</code> with <code>prompt.context</code>, <code>prompt.style</code>, and optional <code>prompt.examples</code>. Project config wins over global for every teammate.",
+      "Yes. Commit <code>.aigtc.json</code> with <code>prompt.context</code>, <code>prompt.style</code>, and optional <code>prompt.examples</code>. Project config wins over global for every teammate.",
   },
   {
     question: "What if the message is wrong?",
@@ -127,7 +127,7 @@ export const nav: readonly NavLink[] = [
   { label: "Providers", href: "providers", internal: true },
   { label: "Config", href: "config", internal: true },
   { label: "FAQ", href: "faq", internal: true },
-  { label: "GitHub", href: "https://github.com/sadiksaifi/ai-git", external: true },
+  { label: "GitHub", href: "https://github.com/Fluxonide/aigtc", external: true },
 ] as const;
 
 // ------------------------------------------------------------------------------
@@ -136,10 +136,10 @@ export const nav: readonly NavLink[] = [
 
 export const footer = {
   copyright: `© ${new Date().getFullYear()} Sadik Saifi`,
-  license: { label: "MIT", href: "https://github.com/sadiksaifi/ai-git/blob/main/LICENSE" },
-  author: { label: "sadiksaifi.dev", href: "https://sadiksaifi.dev" },
+  license: { label: "MIT", href: "https://github.com/Fluxonide/aigtc/blob/main/LICENSE" },
+  author: { label: "Fluxonide.dev", href: "https://Fluxonide.dev" },
   social: [
-    { label: "GitHub", href: "https://github.com/sadiksaifi/ai-git", icon: "github" },
-    { label: "Twitter", href: "https://x.com/thesadiksaifi", icon: "x" },
+    { label: "GitHub", href: "https://github.com/Fluxonide/aigtc", icon: "github" },
+    { label: "Twitter", href: "https://x.com/theFluxonide", icon: "x" },
   ] as readonly SocialLink[],
 } as const;

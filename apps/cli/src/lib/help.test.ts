@@ -8,7 +8,7 @@ describe("renderHelp", () => {
   });
 
   test("includes usage line with [command] and [options]", () => {
-    expect(output).toContain("$ ai-git [command] [options]");
+    expect(output).toContain("$ aigtc [command] [options]");
   });
 
   test("includes CLI description", () => {

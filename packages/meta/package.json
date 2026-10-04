@@ -1,5 +1,5 @@
 {
-  "name": "@ai-git/meta",
+  "name": "@aigtc/meta",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@ai-git/config": "workspace:*",
+    "@aigtc/config": "workspace:*",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

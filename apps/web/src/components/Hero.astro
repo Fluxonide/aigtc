@@ -3,7 +3,7 @@ import { renderTerminalLines } from "../lib/terminal.ts"
 import InstallCommand from "./InstallCommand.astro"
 
 const heroLines: readonly string[] = [
-  '<span class="prompt">$</span> <span class="cmd">ai-git -A</span>',
+  '<span class="prompt">$</span> <span class="cmd">aigtc -A</span>',
   "",
   '<span class="spinner">◐</span> <span class="dim">Analyzing changes with</span> <span class="accent">haiku</span><span class="dim">…</span>',
   "",
@@ -37,10 +37,10 @@ const heroBody = renderTerminalLines(heroLines)
     <div class="hero-grid">
       <div class="hero-copy">
         <h1>
-          ai-git commit <span class="faded">message</span> <span class="accent">generator.</span>
+          aigtc commit <span class="faded">message</span> <span class="accent">generator.</span>
         </h1>
         <p class="hero-sub">
-          ai-git reads your diff and writes Conventional Commits-compliant messages. Scope, subject,
+          aigtc reads your diff and writes Conventional Commits-compliant messages. Scope, subject,
           body, the lot. Pick a provider. Review. Ship.
         </p>
 
@@ -66,7 +66,7 @@ const heroBody = renderTerminalLines(heroLines)
         </div>
 
         <ul class="hero-meta" aria-label="At a glance">
-          <li><code>~/.config/ai-git</code></li>
+          <li><code>~/.config/aigtc</code></li>
           <li>MIT</li>
           <li>macOS · Linux · Windows</li>
           <li>10 providers</li>
@@ -74,11 +74,11 @@ const heroBody = renderTerminalLines(heroLines)
       </div>
 
       <div class="terminal-col">
-        <div class="terminal" role="img" aria-label="ai-git generating a conventional commit">
+        <div class="terminal" role="img" aria-label="aigtc generating a conventional commit">
           <div class="chrome" aria-hidden="true">
             <span class="dots"><span></span><span></span><span></span></span>
             <span class="title">~/projects/app — zsh</span>
-            <span class="tag">ai-git</span>
+            <span class="tag">aigtc</span>
           </div>
           <pre class="tbody"><code set:html={heroBody} /></pre>
         </div>

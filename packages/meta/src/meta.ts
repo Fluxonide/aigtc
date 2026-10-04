@@ -1,11 +1,11 @@
 // ==============================================================================
-// @ai-git/meta — CLI Metadata
+// @aigtc/meta — CLI Metadata
 // ==============================================================================
 
 /**
  * The CLI tool name.
  */
-export const CLI_NAME = "ai-git";
+export const CLI_NAME = "aigtc";
 
 /**
  * The top-level CLI description.

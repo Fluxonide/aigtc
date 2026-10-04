@@ -1,5 +1,5 @@
 {
-  "name": "@ai-git/cli",
+  "name": "@aigtc/cli",
   "version": "0.0.0",
   "description": "AI-powered git commit message generator",
   "keywords": [
@@ -9,14 +9,14 @@
     "conventional-commits",
     "git"
   ],
-  "homepage": "https://ai-git.xyz",
+  "homepage": "https://aigtc.xyz",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sadiksaifi/ai-git"
+    "url": "https://github.com/Fluxonide/aigtc"
   },
   "bin": {
-    "ai-git": "bin/ai-git"
+    "aigtc": "bin/aigtc"
   },
   "files": [
     "bin/",
@@ -27,11 +27,11 @@
     "postinstall": "node scripts/postinstall.js"
   },
   "optionalDependencies": {
-    "@ai-git/darwin-arm64": "0.0.0",
-    "@ai-git/darwin-x64": "0.0.0",
-    "@ai-git/linux-arm64": "0.0.0",
-    "@ai-git/linux-x64": "0.0.0",
-    "@ai-git/win32-arm64": "0.0.0",
-    "@ai-git/win32-x64": "0.0.0"
+    "@aigtc/darwin-arm64": "0.0.0",
+    "@aigtc/darwin-x64": "0.0.0",
+    "@aigtc/linux-arm64": "0.0.0",
+    "@aigtc/linux-x64": "0.0.0",
+    "@aigtc/win32-arm64": "0.0.0",
+    "@aigtc/win32-x64": "0.0.0"
   }
 }

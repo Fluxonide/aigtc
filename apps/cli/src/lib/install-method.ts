@@ -15,10 +15,10 @@ export type InstallMethod = "brew" | "npm" | "curl" | "source" | "unknown";
 let cached: InstallMethod | null = null;
 
 /**
- * Detect how ai-git was installed.
+ * Detect how aigtc was installed.
  *
  * Strategy (ordered):
- * 1. Marker file at ~/.local/state/ai-git/install-method (written during install)
+ * 1. Marker file at ~/.local/state/aigtc/install-method (written during install)
  * 2. Path heuristic based on the resolved real path of process.argv[0]
  */
 export function detectInstallMethod(): InstallMethod {

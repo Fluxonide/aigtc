@@ -14,15 +14,15 @@ function makeMockActors(overrides: Record<string, unknown> = {}) {
     detectPlatformActor: fromPromise(async () => ({
       os: "darwin",
       arch: "arm64",
-      archiveName: "ai-git-darwin-arm64.tar.gz",
+      archiveName: "aigtc-darwin-arm64.tar.gz",
     })),
     downloadReleaseActor: fromPromise(async () => ({
-      tarballPath: "/tmp/ai-git/ai-git-darwin-arm64.tar.gz",
-      checksumsContent: "abc  ai-git-darwin-arm64.tar.gz",
-      tmpDir: "/tmp/ai-git",
+      tarballPath: "/tmp/aigtc/aigtc-darwin-arm64.tar.gz",
+      checksumsContent: "abc  aigtc-darwin-arm64.tar.gz",
+      tmpDir: "/tmp/aigtc",
     })),
     verifyChecksumActor: fromPromise(async () => {}),
-    extractBinaryActor: fromPromise(async () => "/tmp/ai-git/ai-git"),
+    extractBinaryActor: fromPromise(async () => "/tmp/aigtc/aigtc"),
     installBinaryActor: fromPromise(async () => {}),
     cleanupActor: fromPromise(async () => {}),
     ...overrides,
@@ -215,9 +215,9 @@ describe("upgradeMachine", () => {
     let cleanupCalled = false;
     await runMachine({
       downloadReleaseActor: fromPromise(async () => ({
-        tarballPath: "/tmp/ai-git/test.tar.gz",
+        tarballPath: "/tmp/aigtc/test.tar.gz",
         checksumsContent: "abc  test.tar.gz",
-        tmpDir: "/tmp/ai-git",
+        tmpDir: "/tmp/aigtc",
       })),
       verifyChecksumActor: fromPromise(async () => {
         throw new Error("Checksum failed");

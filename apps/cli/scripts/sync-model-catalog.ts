@@ -40,7 +40,7 @@ function sortObjectByKeys<T>(value: Record<string, T>): Record<string, T> {
 async function fetchModelsDevRaw(): Promise<RawResponse> {
   const response = await fetch(MODELS_DEV_API_URL, {
     headers: {
-      "User-Agent": "ai-git-cli",
+      "User-Agent": "aigtc-cli",
       Accept: "application/json",
     },
   });

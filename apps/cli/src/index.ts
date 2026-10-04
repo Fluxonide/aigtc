@@ -6,14 +6,14 @@ import { VERSION } from "./version.ts";
 import type { CLIOptions } from "./machines/cli.machine.ts";
 import { wiredCliMachine } from "./machines/cli.wired.ts";
 import { wiredUpgradeMachine } from "./machines/upgrade.wired.ts";
-import { FLAGS, COMMANDS } from "@ai-git/meta";
+import { FLAGS, COMMANDS } from "@aigtc/meta";
 import { renderHelp } from "./lib/help.ts";
 import { runConfigureFlow } from "./lib/configure.ts";
 
 // Suppress AI SDK warning logs (we handle errors ourselves)
 (globalThis as Record<string, unknown>).AI_SDK_LOG_WARNINGS = false;
 
-const cli = cac("ai-git");
+const cli = cac("aigtc");
 
 // ── Subcommands ─────────────────────────────────────────────────────
 // Standalone flows that bypass cliMachine entirely.
@@ -47,7 +47,7 @@ cli.command("upgrade", COMMANDS.upgrade.description).action(async () => {
 });
 
 // ── Main Command ─────────────────────────────────────────────────────
-// Default command (no subcommand). Flag definitions sourced from @ai-git/meta.
+// Default command (no subcommand). Flag definitions sourced from @aigtc/meta.
 
 cli
   .command("")

@@ -10,19 +10,19 @@ const points: readonly { idx: string; title: string; bodyHtml: string }[] = [
     idx: "02",
     title: "Project config",
     bodyHtml:
-      "<code>.ai-git.json</code> at the repo root. Commit the team's scopes, ticket system, and style preferences.",
+      "<code>.aigtc.json</code> at the repo root. Commit the team's scopes, ticket system, and style preferences.",
   },
   {
     idx: "03",
     title: "Global config",
     bodyHtml:
-      "<code>~/.config/ai-git/config.json</code>. Your preferred provider and model, applied everywhere else.",
+      "<code>~/.config/aigtc/config.json</code>. Your preferred provider and model, applied everywhere else.",
   },
 ] as const
 
 const jsonLines: readonly string[] = [
   '<span class="muted">{</span>',
-  '  <span class="accent">"$schema"</span>: <span class="added">"https://ai-git.xyz/schema.json"</span>,',
+  '  <span class="accent">"$schema"</span>: <span class="added">"https://aigtc.xyz/schema.json"</span>,',
   '  <span class="accent">"provider"</span>: <span class="added">"claude-code"</span>,',
   '  <span class="accent">"model"</span>: <span class="added">"haiku"</span>,',
   '  <span class="accent">"prompt"</span>: {',
@@ -69,7 +69,7 @@ const jsonBody = jsonLines.join("\n")
       <div class="terminal">
         <div class="chrome" aria-hidden="true">
           <span class="dots"><span></span><span></span><span></span></span>
-          <span class="title">.ai-git.json</span>
+          <span class="title">.aigtc.json</span>
           <span class="tag">json</span>
         </div>
         <pre class="tbody" set:html={jsonBody}></pre>

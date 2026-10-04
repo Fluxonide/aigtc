@@ -30,8 +30,8 @@ describe("CLIError", () => {
   });
 
   test("accepts optional suggestion", () => {
-    const err = new CLIError("not found", 1, "Run ai-git --setup");
-    expect(err.suggestion).toBe("Run ai-git --setup");
+    const err = new CLIError("not found", 1, "Run aigtc --setup");
+    expect(err.suggestion).toBe("Run aigtc --setup");
   });
 });
 

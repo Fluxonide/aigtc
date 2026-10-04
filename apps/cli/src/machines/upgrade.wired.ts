@@ -123,7 +123,7 @@ export const wiredUpgradeMachine = upgradeMachine.provide({
         s.start("Installing...");
         try {
           installBinary(input.extractedBinPath);
-          s.stop(`Upgraded ai-git: ${input.version} -> ${input.latestVersion}`);
+          s.stop(`Upgraded aigtc: ${input.version} -> ${input.latestVersion}`);
         } catch (error) {
           s.error(extractErrorMessage(error));
           throw error;

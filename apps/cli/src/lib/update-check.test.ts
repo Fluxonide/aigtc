@@ -116,7 +116,7 @@ describe("update-check", () => {
   describe("cache file location", () => {
     it("should use platform-appropriate cache directory", () => {
       // CACHE_DIR is imported from paths.ts which handles platform differences
-      expect(CACHE_DIR).toContain("ai-git");
+      expect(CACHE_DIR).toContain("aigtc");
       expect(UPDATE_CACHE_FILE).toContain("update-cache.json");
     });
   });

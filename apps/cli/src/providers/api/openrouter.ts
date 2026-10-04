@@ -46,8 +46,8 @@ export const openRouterAdapter: APIProviderAdapter = {
     const openrouter = createOpenRouter({
       apiKey,
       headers: {
-        "HTTP-Referer": "https://github.com/sadiksaifi/ai-git",
-        "X-Title": "ai-git",
+        "HTTP-Referer": "https://github.com/Fluxonide/aigtc",
+        "X-Title": "aigtc",
       },
     });
 
@@ -83,8 +83,8 @@ export const openRouterAdapter: APIProviderAdapter = {
         headers: {
           ...COMMON_HEADERS,
           Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://github.com/sadiksaifi/ai-git",
-          "X-Title": "ai-git",
+          "HTTP-Referer": "https://github.com/Fluxonide/aigtc",
+          "X-Title": "aigtc",
         },
         signal: controller.signal,
       });

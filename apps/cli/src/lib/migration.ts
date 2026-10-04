@@ -172,7 +172,7 @@ export async function migrateLegacyGeminiCliConfig(
   const migratedModel = selectAntigravityMigrationModel(config.model, models);
   if (!migratedModel) {
     throw new Error(
-      `Cannot migrate unsupported Gemini CLI model '${config.model}'. Run \`ai-git configure\` to select an Antigravity model.`,
+      `Cannot migrate unsupported Gemini CLI model '${config.model}'. Run \`aigtc configure\` to select an Antigravity model.`,
     );
   }
 

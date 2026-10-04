@@ -1,7 +1,7 @@
-# @ai-git/meta
+# @aigtc/meta
 
 Shared CLI metadata package. Contains all documentation-level data for the
-ai-git CLI: flag definitions, command definitions, provider display metadata,
+aigtc CLI: flag definitions, command definitions, provider display metadata,
 error message templates, and utility functions.
 
 ## What belongs here
@@ -42,7 +42,7 @@ error message templates, and utility functions.
 ## Conventions
 
 - `private: true` — not published to npm
-- Extends `@ai-git/config/tsconfig.base.json`
+- Extends `@aigtc/config/tsconfig.base.json`
 - Uses `catalog:` for shared dev dependencies
 - Uses `.ts` extensions in imports (`allowImportingTsExtensions`)
 - Formatted with oxfmt, linted with oxlint

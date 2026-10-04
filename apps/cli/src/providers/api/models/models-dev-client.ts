@@ -97,7 +97,7 @@ export function createCatalogFromRaw(raw: unknown, source: ModelCatalog["source"
 export async function fetchModelsDevCatalog(signal?: AbortSignal): Promise<ModelCatalog> {
   const response = await fetch(MODELS_DEV_API_URL, {
     headers: {
-      "User-Agent": "ai-git-cli",
+      "User-Agent": "aigtc-cli",
       Accept: "application/json",
     },
     signal,

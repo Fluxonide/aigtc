@@ -9,7 +9,7 @@
 export interface SecretsManager {
   /**
    * Store a secret securely.
-   * @param service - Service identifier (e.g., "ai-git")
+   * @param service - Service identifier (e.g., "aigtc")
    * @param account - Account identifier (e.g., "openrouter-api-key")
    * @param secret - The secret value to store
    */
@@ -41,8 +41,8 @@ export interface SecretsManager {
 // CONSTANTS
 // ==============================================================================
 
-/** Service name used for all ai-git API keys in the keychain */
-export const API_KEY_SERVICE = "ai-git";
+/** Service name used for all aigtc API keys in the keychain */
+export const API_KEY_SERVICE = "aigtc";
 
 /**
  * Generate the account name for a provider's API key.

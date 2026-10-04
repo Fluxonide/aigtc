@@ -212,8 +212,8 @@ describe("selectAntigravityMigrationModel", () => {
 
 describe("seedAntigravityAuthentication", () => {
   it("links file-backed authentication into the isolated profile without copying it", async () => {
-    const home = mkdtempSync(join(tmpdir(), "ai-git-antigravity-auth-home-"));
-    const profile = mkdtempSync(join(tmpdir(), "ai-git-antigravity-auth-profile-"));
+    const home = mkdtempSync(join(tmpdir(), "aigtc-antigravity-auth-home-"));
+    const profile = mkdtempSync(join(tmpdir(), "aigtc-antigravity-auth-profile-"));
     const source = join(home, ".gemini", "antigravity-cli", "antigravity-oauth-token");
     mkdirSync(join(home, ".gemini", "antigravity-cli"), { recursive: true });
     writeFileSync(source, "synthetic-test-token", { mode: 0o600 });
@@ -238,7 +238,7 @@ describe("isOwnedIsolatedProfilePath", () => {
 
     expect(
       isOwnedIsolatedProfilePath(
-        "C:\\Users\\test\\AppData\\Local\\Temp\\ai-git-antigravity-abc123",
+        "C:\\Users\\test\\AppData\\Local\\Temp\\aigtc-antigravity-abc123",
         "C:\\Users\\test\\AppData\\Local\\Temp",
         win32,
       ),
@@ -321,7 +321,7 @@ describe("readAntigravityProcessOutput", () => {
 
 describe("createIsolatedRuntime", () => {
   it("preserves account authentication when an API key is only ambient", async () => {
-    const home = mkdtempSync(join(tmpdir(), "ai-git-antigravity-account-home-"));
+    const home = mkdtempSync(join(tmpdir(), "aigtc-antigravity-account-home-"));
     const originalHome = process.env.HOME;
     const originalGeminiApiKey = process.env.GEMINI_API_KEY;
     process.env.HOME = home;
@@ -347,7 +347,7 @@ describe("createIsolatedRuntime", () => {
   });
 
   it("removes a partial profile when isolated setup fails", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ai-git-antigravity-partial-"));
+    const root = mkdtempSync(join(tmpdir(), "aigtc-antigravity-partial-"));
     const { createIsolatedRuntime } = await import("./antigravity.ts");
 
     await expect(
@@ -392,7 +392,7 @@ describe("antigravityAdapter.invoke", () => {
 
   it("generates inside a sandboxed temporary profile and removes all invocation state", async () => {
     process.env.GEMINI_API_KEY = "synthetic-test-key";
-    const home = mkdtempSync(join(tmpdir(), "ai-git-antigravity-api-home-"));
+    const home = mkdtempSync(join(tmpdir(), "aigtc-antigravity-api-home-"));
     temporaryHomes.push(home);
     process.env.HOME = home;
     mkdirSync(join(home, ".gemini", "antigravity-cli"), { recursive: true });
@@ -449,7 +449,7 @@ describe("antigravityAdapter.invoke", () => {
       profileRoot = command.find((argument) => argument.startsWith("--gemini_dir="))!.slice(13);
       settings = JSON.parse(readFileSync(`${profileRoot}/antigravity-cli/settings.json`, "utf8"));
       hooks = JSON.parse(readFileSync(`${profileRoot}/config/hooks.json`, "utf8"));
-      agent = readFileSync(`${profileRoot}/config/agents/ai-git/agent.md`, "utf8");
+      agent = readFileSync(`${profileRoot}/config/agents/aigtc/agent.md`, "utf8");
 
       return {
         stdout: stream(
@@ -474,7 +474,7 @@ describe("antigravityAdapter.invoke", () => {
       expect.stringMatching(/^--gemini_dir=/),
       "--sandbox",
       "--agent",
-      "ai-git",
+      "aigtc",
       "--model",
       "gemini-3.7-flash-low",
       "--output-format",
@@ -512,7 +512,7 @@ describe("antigravityAdapter.invoke", () => {
         ],
       },
     });
-    expect(hooks["ai-git-deny-all"].PreToolUse[0].matcher).toBe("*");
+    expect(hooks["aigtc-deny-all"].PreToolUse[0].matcher).toBe("*");
     expect(agent).toContain("tools: []");
     expect(agent).toContain("subagent: false");
     expect(agent).toContain("Follow AI Git's commit-message contract.");

@@ -45,8 +45,8 @@ interface UpgradeContext {
 // ── Delegation messages ──────────────────────────────────────────────
 
 const DELEGATION_MESSAGES: Record<string, string> = {
-  brew: 'Installed via Homebrew. Run "brew upgrade ai-git" instead.',
-  npm: 'Installed via npm. Run "npm update -g @ai-git/cli" instead.',
+  brew: 'Installed via Homebrew. Run "brew upgrade aigtc" instead.',
+  npm: 'Installed via npm. Run "npm update -g @aigtc/cli" instead.',
   source: 'Installed from source. Run "git pull && bun install && bun run build" instead.',
 };
 
@@ -280,7 +280,7 @@ export const upgradeMachine = setup({
           actions: assign({
             exitCode: 0,
             message: ({ context }) =>
-              `Upgraded ai-git: ${context.version} -> ${context.latestVersion}`,
+              `Upgraded aigtc: ${context.version} -> ${context.latestVersion}`,
           }),
         },
         onError: {

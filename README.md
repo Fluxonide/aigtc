@@ -17,7 +17,7 @@ A CLI tool that leverages AI to automatically generate semantically correct, con
 ### npm (Recommended)
 
 ```bash
-npm install -g @ai-git/cli
+npm install -g @aigtc/cli
 ```
 
 > Also works with `bun`, `pnpm`, and `yarn`.
@@ -25,53 +25,53 @@ npm install -g @ai-git/cli
 ### Homebrew (macOS)
 
 ```bash
-brew install sadiksaifi/tap/ai-git
+brew install Fluxonide/tap/aigtc
 ```
 
 ### Shell Script (macOS/Linux)
 
 ```bash
-curl -fsSL https://ai-git.xyz/install | bash
+curl -fsSL https://aigtc.xyz/install | bash
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/sadiksaifi/ai-git.git
-cd ai-git
+git clone https://github.com/Fluxonide/aigtc.git
+cd aigtc
 bun install
 bun run build
 ```
 
 ## Quick Start
 
-Run `ai-git` in any git repository:
+Run `aigtc` in any git repository:
 
 ```bash
-ai-git
+aigtc
 ```
 
 On first run, you'll be guided through a quick setup wizard to choose your AI provider.
 
-Settings are saved to `~/.config/ai-git/config.json`
+Settings are saved to `~/.config/aigtc/config.json`
 
-> **Reconfigure:** `ai-git configure`
-> **Self-update:** `ai-git upgrade`
+> **Reconfigure:** `aigtc configure`
+> **Self-update:** `aigtc upgrade`
 
 ## Usage
 
 ### CLI Reference
 
 ```sh
-$ ai-git --help
+$ aigtc --help
 Usage:
-  $ ai-git [command] [options]
+  $ aigtc [command] [options]
 
 AI-powered Conventional Commits
 
 Commands:
   configure                    Set up AI provider and model
-  upgrade                      Update ai-git to the latest version
+  upgrade                      Update aigtc to the latest version
 
 Model:
   --provider <id>              Use a specific AI provider for this run
@@ -95,31 +95,31 @@ Info:
 
 ```bash
 # Use configured defaults
-ai-git
+aigtc
 
 # Override provider for this run
-ai-git --provider antigravity-cli --model gemini-3.7-flash-low
+aigtc --provider antigravity-cli --model gemini-3.7-flash-low
 
 # Use Codex with reasoning effort baked in
-ai-git --provider codex --model gpt-5.6-luna-low
+aigtc --provider codex --model gpt-5.6-luna-low
 
 # Use OpenCode with a runtime variant
-ai-git --provider opencode --model opencode/gpt-5-nano#minimal
+aigtc --provider opencode --model opencode/gpt-5-nano#minimal
 
 # Use Pi with a thinking level
-ai-git --provider pi --model openai-codex/gpt-5.6-luna#low
+aigtc --provider pi --model openai-codex/gpt-5.6-luna#low
 
 # Use OpenRouter
-ai-git --provider openrouter --model anthropic/claude-sonnet-4-6
+aigtc --provider openrouter --model anthropic/claude-sonnet-4-6
 
 # Exclude files/directories from staging
-ai-git -A --exclude "tests/" --exclude "*.test.ts"
+aigtc -A --exclude "tests/" --exclude "*.test.ts"
 
 # Automated (Be careful!)
-ai-git --dangerously-auto-approve --hint "Refactored authentication module"
+aigtc --dangerously-auto-approve --hint "Refactored authentication module"
 
 # Dry run works without installed provider CLI/API key
-ai-git --dry-run -A
+aigtc --dry-run -A
 ```
 
 ## Supported Providers
@@ -137,7 +137,7 @@ ai-git --dry-run -A
 | Anthropic        | `anthropic`         | API  | [Get API Key](https://console.anthropic.com/settings/keys)                              |
 | Cerebras         | `cerebras`          | API  | [Get API Key](https://cloud.cerebras.ai/)                                               |
 
-Configure with `ai-git configure`
+Configure with `aigtc configure`
 
 Codex defaults to `gpt-5.6-luna-low` and Claude Code defaults to `haiku` for fast,
 repeatable commit-message generation. Antigravity CLI, Pi, OpenCode, and API provider models are
@@ -156,14 +156,14 @@ afterward.
 AI Git uses a **three-tier configuration system**:
 
 1. **CLI flags** (highest priority)
-2. **Project config** (`.ai-git.json`)
-3. **Global config** (`~/.config/ai-git/config.json`)
+2. **Project config** (`.aigtc.json`)
+3. **Global config** (`~/.config/aigtc/config.json`)
 
 ### Example Configs
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/ai-git/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "claude-code",
   "model": "haiku",
   "defaults": {
@@ -176,7 +176,7 @@ AI Git uses a **three-tier configuration system**:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/ai-git/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "openrouter",
   "model": "anthropic/claude-sonnet-4-6"
 }
@@ -202,7 +202,7 @@ The default prompt works excellently for most projects. Customize only for proje
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/sadiksaifi/ai-git/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fluxonide/aigtc/main/schema.json",
   "provider": "claude-code",
   "model": "haiku",
   "prompt": {
@@ -253,7 +253,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Releases
 
-Releases are managed by [Tagsmith](https://tagsmith.sadiksaifi.dev/). Use `bunx tagsmith@latest` to create and validate release tags.
+Releases are managed by [Tagsmith](https://tagsmith.Fluxonide.dev/). Use `bunx tagsmith@latest` to create and validate release tags.
 
 ## License
 

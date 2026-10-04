@@ -1,5 +1,5 @@
 {
-  "$schema": "https://tagsmith.sadiksaifi.dev/schema/v1.json",
+  "$schema": "https://tagsmith.Fluxonide.dev/schema/v1.json",
   "configVersion": 1,
 
   "git": {
@@ -14,7 +14,7 @@
   },
 
   "targets": {
-    "ai-git": {
+    "aigtc": {
       "path": ".",
       "channels": [{ "name": "stable", "strategy": "stable" }],
     },

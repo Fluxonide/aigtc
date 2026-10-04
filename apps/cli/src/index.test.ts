@@ -39,8 +39,8 @@ function cleanOutput(value: string): string {
 }
 
 function createTestHome(config: Record<string, string> = TEST_CONFIG): string {
-  const homeDir = trackTempDir("ai-git-home-");
-  const configDir = path.join(homeDir, ".config", "ai-git");
+  const homeDir = trackTempDir("aigtc-home-");
+  const configDir = path.join(homeDir, ".config", "aigtc");
   const configFile = path.join(configDir, "config.json");
   fs.mkdirSync(configDir, { recursive: true });
   fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
@@ -61,7 +61,7 @@ function runGit(cwd: string, args: string[]): void {
 }
 
 function createGitRepo(): string {
-  const repoDir = trackTempDir("ai-git-repo-");
+  const repoDir = trackTempDir("aigtc-repo-");
   runGit(repoDir, ["init"]);
   runGit(repoDir, ["config", "user.email", "test@example.com"]);
   runGit(repoDir, ["config", "user.name", "AI Git Test"]);
@@ -75,7 +75,7 @@ function createGitRepo(): string {
 }
 
 async function createPathWithoutProviderCLI(): Promise<string> {
-  const binDir = trackTempDir("ai-git-bin-");
+  const binDir = trackTempDir("aigtc-bin-");
   const gitPath = await Bun.which("git");
 
   if (!gitPath) {
@@ -143,7 +143,7 @@ afterEach(() => {
   }
 });
 
-describe("ai-git CLI", () => {
+describe("aigtc CLI", () => {
   it("should print help with --help flag", async () => {
     const homeDir = createTestHome();
     const noProviderPath = await createPathWithoutProviderCLI();
@@ -153,7 +153,7 @@ describe("ai-git CLI", () => {
       pathEnv: noProviderPath,
     });
 
-    expect(result.stdout).toContain("$ ai-git [command] [options]");
+    expect(result.stdout).toContain("$ aigtc [command] [options]");
     expect(result.stdout).not.toContain("Options:");
     expect(result.stdout).toContain("Commands:");
     expect(result.stdout).toContain("configure");
@@ -176,7 +176,7 @@ describe("ai-git CLI", () => {
   it("should fail if not in a git repository before provider checks", async () => {
     const homeDir = createTestHome();
     const noProviderPath = await createPathWithoutProviderCLI();
-    const nonRepoDir = trackTempDir("ai-git-no-repo-");
+    const nonRepoDir = trackTempDir("aigtc-no-repo-");
 
     const result = await runCLI([], {
       cwd: nonRepoDir,
@@ -234,7 +234,7 @@ describe("ai-git CLI", () => {
     const noProviderPath = await createPathWithoutProviderCLI();
     const repoDir = createGitRepo();
 
-    const catalogOverrideFile = path.join(trackTempDir("ai-git-catalog-"), "catalog.json");
+    const catalogOverrideFile = path.join(trackTempDir("aigtc-catalog-"), "catalog.json");
     fs.writeFileSync(
       catalogOverrideFile,
       JSON.stringify(
@@ -269,7 +269,7 @@ describe("ai-git CLI", () => {
     });
 
     expect(result.stderr).toContain("is deprecated");
-    expect(result.stderr).toContain("ai-git configure");
+    expect(result.stderr).toContain("aigtc configure");
     expect(result.exitCode).toBe(1);
   });
 
@@ -295,7 +295,7 @@ describe("ai-git CLI", () => {
     expect(result.exitCode).toBe(0);
 
     // Verify config was migrated on disk
-    const configPath = path.join(homeDir, ".config", "ai-git", "config.json");
+    const configPath = path.join(homeDir, ".config", "aigtc", "config.json");
     const migratedConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
     expect(migratedConfig.model).toBe("sonnet-low");
 
@@ -325,7 +325,7 @@ describe("ai-git CLI", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
 
-    const configPath = path.join(homeDir, ".config", "ai-git", "config.json");
+    const configPath = path.join(homeDir, ".config", "aigtc", "config.json");
     expect(JSON.parse(fs.readFileSync(configPath, "utf8")).model).toBe("gpt-5.6-luna-xhigh");
     const backupFile = fs
       .readdirSync(path.dirname(configPath))
@@ -350,7 +350,7 @@ describe("ai-git CLI", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("DRY RUN: SYSTEM PROMPT");
-    const configPath = path.join(homeDir, ".config", "ai-git", "config.json");
+    const configPath = path.join(homeDir, ".config", "aigtc", "config.json");
     expect(JSON.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({
       provider: "antigravity-cli",
       model: "gemini-3.1-pro-low",
@@ -368,7 +368,7 @@ describe("ai-git CLI", () => {
     });
     const providerPath = await createPathWithFakeAntigravity();
     const repoDir = createGitRepo();
-    const projectConfigPath = path.join(repoDir, ".ai-git.json");
+    const projectConfigPath = path.join(repoDir, ".aigtc.json");
     fs.writeFileSync(projectConfigPath, JSON.stringify({ model: "gemini-3.1-pro-preview" }));
     fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
 
@@ -393,7 +393,7 @@ describe("ai-git CLI", () => {
     const noProviderPath = await createPathWithoutProviderCLI();
     const repoDir = createGitRepo();
     fs.writeFileSync(
-      path.join(repoDir, ".ai-git.json"),
+      path.join(repoDir, ".aigtc.json"),
       JSON.stringify({ provider: "claude-code", model: "haiku" }),
     );
     fs.writeFileSync(path.join(repoDir, "README.md"), "updated\n");
@@ -479,7 +479,7 @@ describe("ai-git CLI", () => {
     });
 
     expect(result.stderr).toContain("Unknown model 'gpt-5.4-low'");
-    expect(result.stderr).toContain("ai-git configure");
+    expect(result.stderr).toContain("aigtc configure");
     expect(result.exitCode).toBe(1);
   });
 
@@ -548,7 +548,7 @@ it("persists and backs up an effective legacy project configuration", async () =
   const homeDir = createTestHome();
   const providerPath = await createPathWithFakeAntigravity();
   const repoDir = createGitRepo();
-  const projectConfigPath = path.join(repoDir, ".ai-git.json");
+  const projectConfigPath = path.join(repoDir, ".aigtc.json");
   fs.writeFileSync(
     projectConfigPath,
     JSON.stringify({ provider: "gemini-cli", model: "gemini-3.1-pro-preview" }),
@@ -568,7 +568,7 @@ it("persists and backs up an effective legacy project configuration", async () =
   });
   const backupFile = fs
     .readdirSync(repoDir)
-    .find((file) => file.startsWith(".ai-git.json.") && file.endsWith(".bak"));
+    .find((file) => file.startsWith(".aigtc.json.") && file.endsWith(".bak"));
   expect(backupFile).toBeDefined();
   expect(JSON.parse(fs.readFileSync(path.join(repoDir, backupFile!), "utf8"))).toEqual({
     provider: "gemini-cli",

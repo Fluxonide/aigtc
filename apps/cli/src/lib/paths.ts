@@ -4,24 +4,21 @@ import * as os from "node:os";
 const isWindows = process.platform === "win32";
 
 // ── Base Directories ────────────────────────────────────────────────
-// macOS/Linux: $XDG_CONFIG_HOME/ai-git  (default ~/.config/ai-git)
-//              $XDG_CACHE_HOME/ai-git   (default ~/.cache/ai-git)
-//              $XDG_STATE_HOME/ai-git   (default ~/.local/state/ai-git)
-// Windows:     %APPDATA%\ai-git         (fallback: ~/AppData/Roaming)
-//              %LOCALAPPDATA%\ai-git    (fallback: ~/AppData/Local)
+// macOS/Linux: $XDG_CONFIG_HOME/aigtc  (default ~/.config/aigtc)
+//              $XDG_CACHE_HOME/aigtc   (default ~/.cache/aigtc)
+//              $XDG_STATE_HOME/aigtc   (default ~/.local/state/aigtc)
+// Windows:     %APPDATA%\aigtc         (fallback: ~/AppData/Roaming)
+//              %LOCALAPPDATA%\aigtc    (fallback: ~/AppData/Local)
 
 /**
  * Compute the config directory at call time (testable via env manipulation).
  */
 export function resolveConfigDir(): string {
   if (isWindows) {
-    return path.join(
-      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
-      "ai-git",
-    );
+    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "aigtc");
   }
   const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
-  return path.join(xdgConfig, "ai-git");
+  return path.join(xdgConfig, "aigtc");
 }
 
 /**
@@ -31,11 +28,11 @@ export function resolveCacheDir(): string {
   if (isWindows) {
     return path.join(
       process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
-      "ai-git",
+      "aigtc",
     );
   }
   const xdgCache = process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache");
-  return path.join(xdgCache, "ai-git");
+  return path.join(xdgCache, "aigtc");
 }
 
 /**
@@ -47,12 +44,12 @@ export function resolveStateDir(): string {
     // Windows doesn't have XDG_STATE_HOME; use LOCALAPPDATA alongside cache
     return path.join(
       process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
-      "ai-git",
+      "aigtc",
       "state",
     );
   }
   const xdgState = process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state");
-  return path.join(xdgState, "ai-git");
+  return path.join(xdgState, "aigtc");
 }
 
 export const CONFIG_DIR = resolveConfigDir();
@@ -87,4 +84,4 @@ export const SECRETS_FILE = path.join(CONFIG_DIR, "secrets.enc");
 
 // ── Temporary Files ─────────────────────────────────────────────────
 
-export const TEMP_MSG_FILE = path.join(os.tmpdir(), "ai-git-msg.txt");
+export const TEMP_MSG_FILE = path.join(os.tmpdir(), "aigtc-msg.txt");

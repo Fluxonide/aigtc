@@ -9,7 +9,7 @@ export interface ParsedVariantModel {
 }
 
 /**
- * Split ai-git's dynamic CLI virtual model format on the last '#'.
+ * Split aigtc's dynamic CLI virtual model format on the last '#'.
  * Base model IDs may contain slashes, colons, or other separators.
  */
 export function parseDynamicVariantModel(virtualId: string): ParsedVariantModel {

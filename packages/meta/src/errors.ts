@@ -2,7 +2,7 @@ import type { ErrorTemplate } from "./types.ts";
 import { CLI_NAME } from "./meta.ts";
 
 // ==============================================================================
-// @ai-git/meta — Error Message Templates
+// @aigtc/meta — Error Message Templates
 // ==============================================================================
 
 /**
@@ -10,7 +10,7 @@ import { CLI_NAME } from "./meta.ts";
  * Plain strings only — consumers handle formatting.
  *
  * Suggestion format:
- * - Actionable: "Run `ai-git configure` to <action>."
+ * - Actionable: "Run `aigtc configure` to <action>."
  * - Non-actionable: descriptive guidance (e.g. provider not available)
  */
 export const ERROR_TEMPLATES = {

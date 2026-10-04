@@ -62,7 +62,7 @@ describe("createDetectPlatformActor", () => {
     const actor = createDetectPlatformActor(() => ({
       os: "darwin",
       arch: "arm64",
-      archiveName: "ai-git-darwin-arm64.tar.gz",
+      archiveName: "aigtc-darwin-arm64.tar.gz",
     }));
     const ref = createActor(actor);
     ref.start();
@@ -70,7 +70,7 @@ describe("createDetectPlatformActor", () => {
     expect(snap.output).toEqual({
       os: "darwin",
       arch: "arm64",
-      archiveName: "ai-git-darwin-arm64.tar.gz",
+      archiveName: "aigtc-darwin-arm64.tar.gz",
     });
   });
 
@@ -90,15 +90,15 @@ describe("createDetectPlatformActor", () => {
 describe("createDownloadReleaseActor", () => {
   test("returns download result", async () => {
     const result = {
-      tarballPath: "/tmp/test/ai-git-darwin-arm64.tar.gz",
-      checksumsContent: "abc123  ai-git-darwin-arm64.tar.gz",
+      tarballPath: "/tmp/test/aigtc-darwin-arm64.tar.gz",
+      checksumsContent: "abc123  aigtc-darwin-arm64.tar.gz",
       tmpDir: "/tmp/test",
     };
     const actor = createDownloadReleaseActor(async () => result);
     const ref = createActor(actor, {
       input: {
         tag: "v2.0.0",
-        platform: { os: "darwin", arch: "arm64", archiveName: "ai-git-darwin-arm64.tar.gz" },
+        platform: { os: "darwin", arch: "arm64", archiveName: "aigtc-darwin-arm64.tar.gz" },
       },
     });
     ref.start();
@@ -143,13 +143,13 @@ describe("createVerifyChecksumActor", () => {
 
 describe("createExtractBinaryActor", () => {
   test("returns extracted path", async () => {
-    const actor = createExtractBinaryActor(async () => "/tmp/test/ai-git");
+    const actor = createExtractBinaryActor(async () => "/tmp/test/aigtc");
     const ref = createActor(actor, {
       input: { tarballPath: "/tmp/test.tar.gz", tmpDir: "/tmp/test" },
     });
     ref.start();
     const snap = await waitFor(ref, (s) => s.status === "done");
-    expect(snap.output).toBe("/tmp/test/ai-git");
+    expect(snap.output).toBe("/tmp/test/aigtc");
   });
 });
 
@@ -157,7 +157,7 @@ describe("createInstallBinaryActor", () => {
   test("resolves on success", async () => {
     const actor = createInstallBinaryActor(() => {});
     const ref = createActor(actor, {
-      input: { extractedBinPath: "/tmp/test/ai-git" },
+      input: { extractedBinPath: "/tmp/test/aigtc" },
     });
     ref.start();
     const snap = await waitFor(ref, (s) => s.status === "done");
@@ -169,7 +169,7 @@ describe("createInstallBinaryActor", () => {
       throw new CLIError("Permission denied: cannot write to /usr/local/bin.");
     });
     const ref = createActor(actor, {
-      input: { extractedBinPath: "/tmp/test/ai-git" },
+      input: { extractedBinPath: "/tmp/test/aigtc" },
     });
     ref.start();
     try {

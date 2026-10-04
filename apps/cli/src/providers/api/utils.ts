@@ -24,7 +24,7 @@ export async function getApiKey(providerId: string, providedKey?: string): Promi
   const key = await getApiKeyFromSecrets(providerId);
   if (!key) {
     throw new Error(
-      `No API key found for ${providerId}. ` + `Run 'ai-git configure' to configure your API key.`,
+      `No API key found for ${providerId}. ` + `Run 'aigtc configure' to configure your API key.`,
     );
   }
   return key;
@@ -58,7 +58,7 @@ export function createTimeoutController(timeoutMs: number = API_TIMEOUT_MS): {
  */
 export const COMMON_HEADERS = {
   "Content-Type": "application/json",
-  "User-Agent": "ai-git-cli",
+  "User-Agent": "aigtc-cli",
 };
 
 // ==============================================================================
@@ -78,12 +78,12 @@ export function formatProviderError(provider: string, status: number, body: stri
     case status === 401 || status === 403:
       return {
         userMessage: `${provider} authentication failed`,
-        suggestion: "Check your API key — run 'ai-git configure'",
+        suggestion: "Check your API key — run 'aigtc configure'",
       };
     case status === 404:
       return {
         userMessage: `${provider} model not found`,
-        suggestion: "Run 'ai-git configure' to select a valid model",
+        suggestion: "Run 'aigtc configure' to select a valid model",
       };
     case status === 429:
       return {

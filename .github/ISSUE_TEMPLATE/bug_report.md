@@ -29,7 +29,7 @@ If applicable, add screenshots to help explain your problem.
 #### Environment:
 
 - macOS version: [e.g. 13.0]
-- ai-git version: [e.g. 0.0.1]
+- aigtc version: [e.g. 0.0.1]
 
 #### Additional context
 

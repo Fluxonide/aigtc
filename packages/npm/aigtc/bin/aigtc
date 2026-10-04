@@ -6,20 +6,20 @@ const path = require("path");
 const os = require("os");
 
 const PLATFORMS = {
-  darwin: { arm64: "@ai-git/darwin-arm64", x64: "@ai-git/darwin-x64" },
-  linux: { arm64: "@ai-git/linux-arm64", x64: "@ai-git/linux-x64" },
-  win32: { arm64: "@ai-git/win32-arm64", x64: "@ai-git/win32-x64" },
+  darwin: { arm64: "@aigtc/darwin-arm64", x64: "@aigtc/darwin-x64" },
+  linux: { arm64: "@aigtc/linux-arm64", x64: "@aigtc/linux-x64" },
+  win32: { arm64: "@aigtc/win32-arm64", x64: "@aigtc/win32-x64" },
 };
 
 const platformPkgs = PLATFORMS[os.platform()];
 if (!platformPkgs) {
-  console.error(`ai-git: unsupported platform: ${os.platform()}-${os.arch()}`);
+  console.error(`aigtc: unsupported platform: ${os.platform()}-${os.arch()}`);
   process.exit(1);
 }
 
 const pkg = platformPkgs[os.arch()];
 if (!pkg) {
-  console.error(`ai-git: unsupported architecture: ${os.platform()}-${os.arch()}`);
+  console.error(`aigtc: unsupported architecture: ${os.platform()}-${os.arch()}`);
   process.exit(1);
 }
 
@@ -27,14 +27,14 @@ const ext = os.platform() === "win32" ? ".exe" : "";
 const bin = path.join(
   path.dirname(require.resolve(`${pkg}/package.json`)),
   "bin",
-  `ai-git${ext}`,
+  `aigtc${ext}`,
 );
 
 if (!fs.existsSync(bin)) {
   console.error(
-    `ai-git: binary not found at ${bin}\n` +
+    `aigtc: binary not found at ${bin}\n` +
     `The platform package (${pkg}) may not contain a binary yet.\n` +
-    `Try reinstalling: npm install -g @ai-git/cli`
+    `Try reinstalling: npm install -g @aigtc/cli`
   );
   process.exit(1);
 }

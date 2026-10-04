@@ -22,21 +22,21 @@ describe("paths", () => {
     if (isWindows) {
       it("CONFIG_DIR uses APPDATA on Windows", () => {
         const appdata = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
-        expect(CONFIG_DIR).toBe(path.join(appdata, "ai-git"));
+        expect(CONFIG_DIR).toBe(path.join(appdata, "aigtc"));
       });
 
       it("CACHE_DIR uses LOCALAPPDATA on Windows", () => {
         const localAppdata =
           process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
-        expect(CACHE_DIR).toBe(path.join(localAppdata, "ai-git"));
+        expect(CACHE_DIR).toBe(path.join(localAppdata, "aigtc"));
       });
     } else {
-      it("CONFIG_DIR uses ~/.config/ai-git on Unix", () => {
-        expect(CONFIG_DIR).toBe(path.join(os.homedir(), ".config", "ai-git"));
+      it("CONFIG_DIR uses ~/.config/aigtc on Unix", () => {
+        expect(CONFIG_DIR).toBe(path.join(os.homedir(), ".config", "aigtc"));
       });
 
-      it("CACHE_DIR uses ~/.cache/ai-git on Unix", () => {
-        expect(CACHE_DIR).toBe(path.join(os.homedir(), ".cache", "ai-git"));
+      it("CACHE_DIR uses ~/.cache/aigtc on Unix", () => {
+        expect(CACHE_DIR).toBe(path.join(os.homedir(), ".cache", "aigtc"));
       });
     }
   });
@@ -61,22 +61,22 @@ describe("paths", () => {
 
       it("resolveConfigDir uses APPDATA when set", () => {
         process.env.APPDATA = "C:\\Users\\test\\AppData\\Roaming";
-        expect(resolveConfigDir()).toBe("C:\\Users\\test\\AppData\\Roaming\\ai-git");
+        expect(resolveConfigDir()).toBe("C:\\Users\\test\\AppData\\Roaming\\aigtc");
       });
 
       it("resolveConfigDir falls back to homedir when APPDATA is unset", () => {
         delete process.env.APPDATA;
-        expect(resolveConfigDir()).toBe(path.join(os.homedir(), "AppData", "Roaming", "ai-git"));
+        expect(resolveConfigDir()).toBe(path.join(os.homedir(), "AppData", "Roaming", "aigtc"));
       });
 
       it("resolveCacheDir uses LOCALAPPDATA when set", () => {
         process.env.LOCALAPPDATA = "C:\\Users\\test\\AppData\\Local";
-        expect(resolveCacheDir()).toBe("C:\\Users\\test\\AppData\\Local\\ai-git");
+        expect(resolveCacheDir()).toBe("C:\\Users\\test\\AppData\\Local\\aigtc");
       });
 
       it("resolveCacheDir falls back to homedir when LOCALAPPDATA is unset", () => {
         delete process.env.LOCALAPPDATA;
-        expect(resolveCacheDir()).toBe(path.join(os.homedir(), "AppData", "Local", "ai-git"));
+        expect(resolveCacheDir()).toBe(path.join(os.homedir(), "AppData", "Local", "aigtc"));
       });
     } else {
       const originalXdgConfig = process.env.XDG_CONFIG_HOME;
@@ -97,22 +97,22 @@ describe("paths", () => {
 
       it("resolveConfigDir respects XDG_CONFIG_HOME", () => {
         process.env.XDG_CONFIG_HOME = "/tmp/xdg-config";
-        expect(resolveConfigDir()).toBe("/tmp/xdg-config/ai-git");
+        expect(resolveConfigDir()).toBe("/tmp/xdg-config/aigtc");
       });
 
       it("resolveConfigDir falls back to ~/.config when XDG_CONFIG_HOME is unset", () => {
         delete process.env.XDG_CONFIG_HOME;
-        expect(resolveConfigDir()).toBe(path.join(os.homedir(), ".config", "ai-git"));
+        expect(resolveConfigDir()).toBe(path.join(os.homedir(), ".config", "aigtc"));
       });
 
       it("resolveCacheDir respects XDG_CACHE_HOME", () => {
         process.env.XDG_CACHE_HOME = "/tmp/xdg-cache";
-        expect(resolveCacheDir()).toBe("/tmp/xdg-cache/ai-git");
+        expect(resolveCacheDir()).toBe("/tmp/xdg-cache/aigtc");
       });
 
       it("resolveCacheDir falls back to ~/.cache when XDG_CACHE_HOME is unset", () => {
         delete process.env.XDG_CACHE_HOME;
-        expect(resolveCacheDir()).toBe(path.join(os.homedir(), ".cache", "ai-git"));
+        expect(resolveCacheDir()).toBe(path.join(os.homedir(), ".cache", "aigtc"));
       });
     }
   });
@@ -164,7 +164,7 @@ describe("paths", () => {
 
   describe("temporary files", () => {
     it("TEMP_MSG_FILE is in the OS temp directory", () => {
-      expect(TEMP_MSG_FILE).toBe(path.join(os.tmpdir(), "ai-git-msg.txt"));
+      expect(TEMP_MSG_FILE).toBe(path.join(os.tmpdir(), "aigtc-msg.txt"));
     });
   });
 });

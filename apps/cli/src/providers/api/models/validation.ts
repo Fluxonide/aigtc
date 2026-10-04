@@ -20,7 +20,7 @@ export async function assertConfiguredModelAllowed(
     const displayName = metadata?.name || modelId;
     throw new Error(
       `Configured model '${displayName}' (${modelId}) is deprecated for provider '${providerId}'. ` +
-        "Run 'ai-git configure' to choose a supported model.",
+        "Run 'aigtc configure' to choose a supported model.",
     );
   }
 }

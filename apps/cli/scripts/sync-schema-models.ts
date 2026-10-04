@@ -104,7 +104,7 @@ function pickProviderExample(
 async function fetchModelsDev(): Promise<ModelsDevPayload> {
   const response = await fetch(MODELS_DEV_API_URL, {
     headers: {
-      "User-Agent": "ai-git-cli",
+      "User-Agent": "aigtc-cli",
       Accept: "application/json",
     },
   });

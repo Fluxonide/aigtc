@@ -3,19 +3,19 @@
   "version": "0.0.0-git",
   "description": "A CLI tool that leverages AI to automatically generate semantically correct, Conventional Commits compliant git messages.",
   "license": "MIT",
-  "author": "Sadik Saifi <mail@sadiksaifi.dev>",
+  "author": "Sadik Saifi <mail@Fluxonide.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sadiksaifi/ai-git"
+    "url": "https://github.com/Fluxonide/aigtc"
   },
   "bin": {
-    "ai-git": "src/index.ts"
+    "aigtc": "src/index.ts"
   },
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build --compile --minify --sourcemap src/index.ts --outfile dist/ai-git",
+    "build": "bun build --compile --minify --sourcemap src/index.ts --outfile dist/aigtc",
     "typecheck": "tsc --noEmit",
     "check": "oxlint && oxfmt --check",
     "check:fix": "oxlint --fix && oxfmt --write",
@@ -25,11 +25,11 @@
     "sync:models": "bun run sync:catalog && bun run sync:schema"
   },
   "dependencies": {
-    "@ai-git/meta": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.1",
     "@ai-sdk/cerebras": "^2.0.33",
     "@ai-sdk/google": "^3.0.1",
     "@ai-sdk/openai": "^3.0.1",
+    "@aigtc/meta": "workspace:*",
     "@clack/prompts": "^1.2.0",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.5",
@@ -39,7 +39,7 @@
     "xstate": "^5.28.0"
   },
   "devDependencies": {
-    "@ai-git/config": "workspace:*",
+    "@aigtc/config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/prompts": "^2.4.9",
     "oxfmt": "catalog:",

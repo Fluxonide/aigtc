@@ -54,7 +54,7 @@ export function createEditorActor(
       throw error;
     }
     const args = editor.split(" ");
-    const tempFile = join(tmpdir(), `ai-git-msg-${randomUUID()}.txt`);
+    const tempFile = join(tmpdir(), `aigtc-msg-${randomUUID()}.txt`);
     args.push(tempFile);
 
     try {

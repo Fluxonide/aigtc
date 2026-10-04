@@ -11,7 +11,7 @@ import { confirm, isCancel } from "@clack/prompts";
  */
 export async function askTryNow(): Promise<boolean> {
   const tryNow = await confirm({
-    message: "Run ai-git now?",
+    message: "Run aigtc now?",
     initialValue: true,
   });
 

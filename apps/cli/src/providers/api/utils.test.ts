@@ -5,19 +5,19 @@ describe("formatProviderError", () => {
   test("401 returns auth error with API key suggestion", () => {
     const err = formatProviderError("Anthropic", 401, "Unauthorized");
     expect(err.userMessage).toBe("Anthropic authentication failed");
-    expect(err.suggestion).toBe("Check your API key — run 'ai-git configure'");
+    expect(err.suggestion).toBe("Check your API key — run 'aigtc configure'");
   });
 
   test("403 returns auth error with API key suggestion", () => {
     const err = formatProviderError("OpenAI", 403, "Forbidden");
     expect(err.userMessage).toBe("OpenAI authentication failed");
-    expect(err.suggestion).toBe("Check your API key — run 'ai-git configure'");
+    expect(err.suggestion).toBe("Check your API key — run 'aigtc configure'");
   });
 
   test("404 returns model not found with configure suggestion", () => {
     const err = formatProviderError("OpenRouter", 404, "Not Found");
     expect(err.userMessage).toBe("OpenRouter model not found");
-    expect(err.suggestion).toBe("Run 'ai-git configure' to select a valid model");
+    expect(err.suggestion).toBe("Run 'aigtc configure' to select a valid model");
   });
 
   test("429 returns rate limit with wait suggestion", () => {

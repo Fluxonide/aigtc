@@ -12,7 +12,7 @@ import { getSecretsManager } from "./index.ts";
 
 describe("BunSecretsManager", () => {
   const manager = new BunSecretsManager();
-  const service = "ai-git-test";
+  const service = "aigtc-test";
   const account = "test-secret";
 
   afterAll(async () => {
@@ -78,7 +78,7 @@ describe("EncryptedFileSecretsManager", () => {
   let secretsPath: string;
 
   beforeAll(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ai-git-secrets-test-"));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "aigtc-secrets-test-"));
     secretsPath = path.join(tempDir, "secrets.enc");
   });
 

@@ -1,11 +1,11 @@
 {
-  "name": "@ai-git/win32-arm64",
+  "name": "@aigtc/win32-arm64",
   "version": "0.0.0",
-  "description": "ai-git binary for Windows ARM64",
+  "description": "aigtc binary for Windows ARM64",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sadiksaifi/ai-git"
+    "url": "https://github.com/Fluxonide/aigtc"
   },
   "files": [
     "bin/",

@@ -140,7 +140,7 @@ export const initMachine = setup({
         src: "confirmActor",
         input: {
           // @ts-expect-error — XState v5 invoke type inference
-          message: "Project config (.ai-git.json) already exists. Overwrite?",
+          message: "Project config (.aigtc.json) already exists. Overwrite?",
           initialValue: false,
         },
         onDone: [
@@ -290,13 +290,13 @@ export const initMachine = setup({
       },
     },
 
-    // ── IN9/IN10: Ask if user wants to run ai-git now ────────────────
+    // ── IN9/IN10: Ask if user wants to run aigtc now ────────────────
     askTryNow: {
       invoke: {
         src: "confirmActor",
         input: {
           // @ts-expect-error — XState v5 invoke type inference
-          message: "Run ai-git now?",
+          message: "Run aigtc now?",
           initialValue: true,
         },
         onDone: [

@@ -21,7 +21,7 @@ function createTempPath(prefix: string): string {
 }
 
 function writeCatalogOverride(): string {
-  const tempDir = createTempPath("ai-git-catalog-override-");
+  const tempDir = createTempPath("aigtc-catalog-override-");
   const file = path.join(tempDir, "catalog.json");
 
   const raw = {

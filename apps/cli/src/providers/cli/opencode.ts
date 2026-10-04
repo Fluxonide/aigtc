@@ -1,7 +1,7 @@
 import type { CLIProviderAdapter, InvokeOptions } from "../types.ts";
 import { parseDynamicVariantModel, readProcessOutput, type DynamicCLIModel } from "./dynamic.ts";
 
-const OPENCODE_AGENT = "ai-git";
+const OPENCODE_AGENT = "aigtc";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
